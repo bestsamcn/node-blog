@@ -49,7 +49,13 @@ var ArticleSchema = new mongoose.Schema({
 		type:Number,
 		require:true,
 		default:0
-	}
+	},
+	pinYin:[
+		{
+			type:String,
+			require:false
+		}
+	],
 });
 
 exports= module.exports = ArticleSchema; 
