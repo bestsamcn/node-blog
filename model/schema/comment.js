@@ -40,5 +40,6 @@ var CommentSchema = new mongoose.Schema({
 		require:false,
 		default:null
 	}
+});
 
-})
+exports = module.exports = CommentSchema;
