@@ -18,6 +18,7 @@ var _config = {
 	    database: MONGO_DATABASE,
 	    server: NODE_HOST
 	},
-	templateCache:TEMPLATE_CACHE
+	templateCache:TEMPLATE_CACHE,
+	TOKEN_SECRECT:TOKEN_SECRECT
 }
 exports = module.exports = _config;
