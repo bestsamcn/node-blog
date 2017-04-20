@@ -2,6 +2,7 @@ var NODE_ENV = process.env.NODE_ENV || 'development',
 	NODE_HOST = process.env.NODE_HOST || '127.0.0.1',
 	NODE_PORT = process.env.NODE_PORT || 3040,
 	TOKEN_SECRECT = process.env.TOKEN_SECRECT || 'node-blog',
+	TOKEN_EXPIRES = process.env.TOKEN_EXPIRES || 7;
 	NODE_REDIS_PORT = process.env.NODE_REDIS_PORT || 6379,
 	TEMPLATE_CACHE = ( NODE_ENV !== 'development' ),
 	MONGO_DATABASE = process.env.MONGO_DATABASE || 'blog',
@@ -19,6 +20,7 @@ var _config = {
 	    server: NODE_HOST
 	},
 	templateCache:TEMPLATE_CACHE,
-	TOKEN_SECRECT:TOKEN_SECRECT
+	TOKEN_SECRECT:TOKEN_SECRECT,
+	TOKEN_EXPIRES:TOKEN_EXPIRES
 }
 exports = module.exports = _config;
