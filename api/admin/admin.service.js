@@ -144,9 +144,7 @@ var _adminLogin = function(req, res){
 		var oneDay = 1000*60*60*24;
 		_expires = new Date().getTime() + _expires * oneDay;
 		var _userID = fdoc._id.toString();
-		console.log(GLOBAL_CONFIG.TOKEN_SECRECT,'fffffffffffffffffffffff')
 		var _token = jwt.encode({iss:_userID, exp:_expires}, GLOBAL_CONFIG.TOKEN_SECRECT);
-		
 		res.json({retCode:0, msg:'登录成功', token:_token, expires:_expires, data:fdoc});
 		res.end();
 	}
