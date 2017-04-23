@@ -6,6 +6,7 @@ var _ = require('lodash');
 var $$ = require('../../tools');
 var jwt = require('jwt-simple');
 var GLOBAL_CONFIG = require('../../config');
+var tokenManager = require('../../interceptor/tokenManager');
 
 /**
  * 创建管理员
@@ -144,13 +145,30 @@ var _adminLogin = function(req, res){
 		var oneDay = 1000*60*60*24;
 		_expires = new Date().getTime() + _expires * oneDay;
 		var _userID = fdoc._id.toString();
-		var _token = jwt.encode({iss:_userID, exp:_expires}, GLOBAL_CONFIG.TOKEN_SECRECT);
+		var _token = jwt.encode({iss:_userID, exp:_expires}, GLOBAL_CONFIG.TOKEN_SECRET);
 		res.json({retCode:0, msg:'登录成功', token:_token, expires:_expires, data:fdoc});
 		res.end();
 	}
 	_isExistAccount().then(_isEqualToPassword).then(_updateAndReturn);
 }
 
+/**
+ * 退出登录
+ */
+var _adminLogout = function(req, res){
+	console.log(ffffffffffffffffffff) 
+	var token = req.body['x-access-token'] || req.query['x-access-token'] || req.headers['x-access-token'] || null;
+	
+	if(!!req.user){
+		tokenManager.expireToken(token);
+		req.user = null;;
+		res.json({retCode:0, msg:'退出成功', data:null});
+		return;
+	}
+	res.json({retCode:10007, msg:'查询无该用户', data:null});
+}
+
 
 exports.createAdmin = _createAdmin;
 exports.adminLogin = _adminLogin;
+exports.adminLogout = _adminLogout;

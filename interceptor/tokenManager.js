@@ -3,19 +3,18 @@ var GLOBAL_CONFIG = require('../config');
 var UserModel = require('../model').AdminModel;
 var jwt = require('jwt-simple');
 //将用户退出后的token保存到redis
-var _expireToken = function(req, res, next){
-	var token = req.body.token || req.query.token || req.headers['x-access-token'] || null;
+var _expireToken = function(headers){
+	var token = req.body['x-access-token'] || req.query['x-access-token'] || req.headers['x-access-token'] || null;
 	if(!!token){
 		redisClient.set(token, {is_expired:true});
 		//单位秒
-		redisClient.expire(token, GLOBAL_CONFIG.TOKEN_EXPIRE*24*60*60);
+		redisClient.expire(token, GLOBAL_CONFIG.TOKEN_EXPIRES*24*60*60);
 	}
-	next();
 }
 
 //如果在redis中检测到token证明该用户已经退出了，当前token无效
 var _valifyToken = function(req, res, next){
-	var token = req.body.token || req.query.token || req.headers['x-access-token'] || null;
+	var token = req.body['x-access-token'] || req.query['x-access-token']|| req.headers['x-access-token'] || null;
 	redisClient.get(token, function(err, tok){
 		if(err){
 			res.sendStatus(500);
@@ -44,3 +43,5 @@ var _valifyToken = function(req, res, next){
 		});
 	});
 }
+exports.expireToken = _expireToken;
+exports.valifyToken = _valifyToken;
