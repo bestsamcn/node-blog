@@ -13,14 +13,16 @@ var ArticleSchema = new mongoose.Schema({
 	},
 	category:[
 		{
-			type:String,
-			require:false
+			type:mongoose.Schema.ObjectId,
+			require:true,
+			ref:'Category'
 		}
 	],
-	tags:[
+	tag:[
 		{
-			type:String,
-			require:false
+			type:mongoose.Schema.ObjectId,
+			require:true,
+			ref:'Tag'
 		}
 	],
 	readNum:{

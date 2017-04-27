@@ -105,7 +105,41 @@ var _dateFormat = function(dateString, formatString){
     });
     return formatString;
 }
+
+//html转义
+var _unhtml= function(str, reg){
+    return str ? str.replace(reg || /[&<">'](?:(amp|lt|quot|gt|#39|nbsp|#\d+);)?/g, function (a, b) {
+        if (b) {
+            return a;
+        } else {
+            return {
+                '<':'&lt;',
+                '&':'&amp;',
+                '"':'&quot;',
+                '>':'&gt;',
+                "'":'&#39;'
+            }[a]
+        }
+    }) : '';
+}
+
+//转html
+var _tohtml = function(str){
+    return str ? str.replace(/&((g|l|quo)t|amp|#39|nbsp);/g, function (m) {
+        return {
+            '&lt;':'<',
+            '&amp;':'&',
+            '&quot;':'"',
+            '&gt;':'>',
+            '&#39;':"'",
+            '&nbsp;':' '
+        }[m]
+    }) : '';
+} 
+
 exports.getClientIp = _getClientIp;
 exports.getPinyin = _getPinyin;
 exports.generateArray = _generateArray;
 exports.dateFormat = _dateFormat;
+exports.unhtml = _unhtml;
+exports.tohtml = _tohtml;

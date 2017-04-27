@@ -54,5 +54,16 @@ var _valifyToken = function(req, res, next){
 	});
 }
 
+//查看是否是管理员登录
+var _checkAdminLogin = function(req, res, next){
+	if(!req.isLogin || !req.user || req.user.userType < 2){
+        res.json({retCode:10009, msg:'你无权限', data:null});
+        res.end();
+        return;
+    }
+    next();
+}
+
 exports.expireToken = _expireToken;
 exports.valifyToken = _valifyToken;
+exports.checkAdminLogin = _checkAdminLogin;

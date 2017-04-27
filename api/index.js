@@ -2,8 +2,8 @@
  * 服务集合
  */
 
-var adminServiceList = require('./admin');
+var articleServiceList = require('./article');
 var _serviceList = function(app){
-	app.use('/api/admin', adminServiceList);
+	app.use('/api/article', articleServiceList);
 }
 module.exports = _serviceList;
