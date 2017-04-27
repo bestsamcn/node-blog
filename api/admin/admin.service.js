@@ -6,7 +6,7 @@ var _ = require('lodash');
 var $$ = require('../../tools');
 var jwt = require('jwt-simple');
 var GLOBAL_CONFIG = require('../../config');
-var tokenManager = require('../../interceptor/tokenManager');
+var interceptor = require('../../interceptor');
 
 /**
  * 创建管理员
@@ -14,7 +14,7 @@ var tokenManager = require('../../interceptor/tokenManager');
  * @param  {string} password 用户密码
  * @return {object}     返回对象
  */
-var _createAdmin = function(req, res){
+var _create = function(req, res){
 	var _account = req.body.account;
 	var _password = req.body.password;
 	if(/\s/.test(_account) || /\s/.test(_password)){
@@ -87,19 +87,21 @@ var _createAdmin = function(req, res){
  * @param  {number} expires 保持登录天数 
  * @return {object}    返回对象 
  */
-var _adminLogin = function(req, res){
-
+var _login = function(req, res){
+	var token = req.body['x-access-token'] || req.query['x-access-token'] || req.headers['x-access-token'];
+	if(req.token === token){
+		res.json({retCode:10008, msg:'你已登录', data:null});
+		res.end();
+		return;
+	}
 	var _account = req.body.account;
 	var _password = req.body.password;
 	var _expires = req.body.expires;
-
-
 	_account = _.trim(_account);
 	_password = _.trim(_password);
 	_expires = _expires*1 || 3;
 	//是否已经存在该用户名
 	var _isExistAccount = function(){
-
 		var defer = Q.defer();
 		AdminModel.findOne({account:_account}, function(ferr, fdoc){
 			if(ferr){
@@ -155,20 +157,16 @@ var _adminLogin = function(req, res){
 /**
  * 退出登录
  */
-var _adminLogout = function(req, res){
-	console.log(ffffffffffffffffffff) 
-	var token = req.body['x-access-token'] || req.query['x-access-token'] || req.headers['x-access-token'] || null;
-	
-	if(!!req.user){
-		tokenManager.expireToken(token);
-		req.user = null;;
-		res.json({retCode:0, msg:'退出成功', data:null});
-		return;
-	}
-	res.json({retCode:10007, msg:'查询无该用户', data:null});
+var _logout = function(req, res){
+	var token = req.token;
+	interceptor.expireToken(token);
+	req.token = null;
+	req.user = null;
+	req.isLogin = null;
+	res.json({retCode:0, msg:'退出成功', data:null});
 }
 
 
-exports.createAdmin = _createAdmin;
-exports.adminLogin = _adminLogin;
-exports.adminLogout = _adminLogout;
+exports.create = _create;
+exports.login = _login;
+exports.logout = _logout;
