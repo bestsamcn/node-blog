@@ -30,14 +30,13 @@ var ArticleSchema = new mongoose.Schema({
 		require:true,
 		default:0
 	},
-	comment:{
-		type:mongoose.Schema.ObjectId,
-		require:true,
-		ref:'Comment'
-	},
 	thumnail:{
 		type:String,
-		require:true
+		require:false
+	},
+	poster:{
+		type:String,
+		require:false
 	},
 	content:{
 		type:String,
@@ -52,12 +51,16 @@ var ArticleSchema = new mongoose.Schema({
 		require:true,
 		default:0
 	},
+	title:{
+		type:String,
+		require:true
+	},
 	pinYin:[
 		{
 			type:String,
 			require:false
 		}
-	],
+	]
 });
 
 exports= module.exports = ArticleSchema; 

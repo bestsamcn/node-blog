@@ -2,13 +2,10 @@ require('../connect');
 var mongoose =  require('mongoose');
 
 var TagSchema = new mongoose.Schema({
-    value:{
-        type:Number,
-        require:true
-    },
-    text:{
+    name:{
         type:String,
-        require:true
+        require:true,
+        unique:true
     },
     createTime:{
         type:Number,
