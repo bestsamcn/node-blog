@@ -137,7 +137,7 @@ var _edit = function(req, res){
 
  	//修改
  	var __edit = function(){
- 		CategoryModel.update({_id:_cateID}, {$set:{name:_name}}, function(err, upt){
+ 		CategoryModel.update({_id:_cateID}, {$set:{name:_name, createTime:Date.now()}}, function(err, upt){
  			if(err || !upt.ok || upt.n != 1){
  				res.sendStatus(500);
  				return;

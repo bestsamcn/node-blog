@@ -130,7 +130,7 @@ var _edit = function(req, res){
  				return;
  			}
  			if(doc){
- 				res.json({retCode:10012, msg:'标签名重复', data:null});
+ 				res.json({retCode:10013, msg:'标签名重复', data:null});
  				return;
  			}
  			defer.resolve();
@@ -140,7 +140,7 @@ var _edit = function(req, res){
 
  	//修改
  	var __edit = function(){
- 		TagModel.update({_id:_tagID}, {$set:{name:_name}}, function(err, upt){
+ 		TagModel.update({_id:_tagID}, {$set:{name:_name, createTime:Date.now()}}, function(err, upt){
  			if(err || !upt.ok || upt.n != 1){
  				res.sendStatus(500);
  				return;

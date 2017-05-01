@@ -8,6 +8,7 @@ var article = require('./schema/article');
 var tag = require('./schema/tag');
 var category = require('./schema/category');
 var comment = require('./schema/comment');
+var message = require('./schema/message');
 var mongoose = require('mongoose');
 
 
@@ -17,3 +18,4 @@ exports.AritcleModel = mongoose.model('Article', article);
 exports.TagModel = mongoose.model('Tag', tag);
 exports.CategoryModel = mongoose.model('Category', category);
 exports.CommentModel = mongoose.model('Comment', comment);
+exports.MessageModel = mongoose.model('Message', message);
