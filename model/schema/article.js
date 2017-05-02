@@ -1,7 +1,7 @@
 var mongoose = require('mongoose');
 
 var ArticleSchema = new mongoose.Schema({
-	createAdmin:{
+	creator:{
 		type:mongoose.Schema.ObjectId,
 		require:true,
 		ref:'User'
@@ -10,6 +10,10 @@ var ArticleSchema = new mongoose.Schema({
 		type:Number,
 		require:true,
 		default:Date.now
+	},
+	lastEditTime:{
+		type:Number,
+		require:false
 	},
 	category:[
 		{
@@ -62,5 +66,5 @@ var ArticleSchema = new mongoose.Schema({
 		}
 	]
 });
-
+ArticleSchema.index({ subject: 'text', content: 'text' })
 exports= module.exports = ArticleSchema; 

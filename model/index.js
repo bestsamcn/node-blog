@@ -14,7 +14,7 @@ var mongoose = require('mongoose');
 
 //管理员模型
 exports.AdminModel = mongoose.model('Admin', admin);
-exports.AritcleModel = mongoose.model('Article', article);
+exports.ArticleModel = mongoose.model('Article', article);
 exports.TagModel = mongoose.model('Tag', tag);
 exports.CategoryModel = mongoose.model('Category', category);
 exports.CommentModel = mongoose.model('Comment', comment);
