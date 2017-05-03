@@ -235,38 +235,39 @@ var _getList = function(req, res){
 
     if(!!_keyword){
         _keyword = decodeURI(_keyword);
-        console.log(_key)
+        console.log(_keyword)
         var reg = new RegExp(_keyword, 'gim');
-        filterObj.$or = [
-            {
-                'title':{
-                    $regex:reg
-                }
-            },
-            {
-                'previewText':{
-                    $regex:reg
-                }
-            },
-            {
-                'pinYin':{
-                    $regex:reg
-                }
-            }
-        ]
+        // filterObj.$or = [
+        //     {
+        //         'title':{
+        //             $regex:reg
+        //         }
+        //     },
+        //     {
+        //         'previewText':{
+        //             $regex:reg
+        //         }
+        //     },
+        //     {
+        //         'pinYin':{
+        //             $regex:reg
+        //         }
+        //     }
+        // ]
+        filterObj.$text = {};
+        filterObj.$text.$search = _keyword;
     }
 
     if(!!_tag){
-        filterObj.tag = {
-            $elemMatch:_tag
-        }
+        filterObj.tag = {};
+        filterObj.tag.name.$all = _tag.split(',');
     }
-    if(!!_cate){
-        filterObj.category = {
-            $elemMatch:_tag
-        }
-    }
-    ArticleModel.find(filterObj).skip(_pageIndex * _pageSize).limit(_pageSize).populate(['category', 'tag']).exec(function(err, flist){
+    // if(!!_cate){
+    //     filterObj.category = {
+    //         $elemMatch:_tag
+    //     }
+    // }
+    ArticleModel.find(filterObj).skip(_pageIndex * _pageSize).limit(_pageSize).populate(['tag', 'category']).exec(function(err, flist){
         if(err){
             return res.sendStatus(500);
         }

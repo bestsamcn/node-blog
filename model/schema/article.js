@@ -66,5 +66,5 @@ var ArticleSchema = new mongoose.Schema({
 		}
 	]
 });
-ArticleSchema.index({ subject: 'text', content: 'text' })
+ArticleSchema.index({'$**': 'text'})
 exports= module.exports = ArticleSchema; 
