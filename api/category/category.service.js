@@ -152,7 +152,7 @@ var _edit = function(req, res){
  * 查标签
  */
 var _getList = function(req, res){
-	CategoryModel.find(function(err, flist){
+	CategoryModel.find().sort({'_id':-1}).exec(function(err, flist){
 		if(err){
 			res.sendStatus(500);
 			return;

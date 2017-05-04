@@ -21,27 +21,14 @@ var _add = function(req, res){
     var _title = req.body.title;
     var _previewText = req.body.previewText;
     var _poster = req.body.poster || '';
-    if(!_tag){
+    
+    if(!_tag || !tools.isObjectID(_tag)){
         return res.json({retCode:10014, msg:'请选择标签', data:null});
     }
-    var __tag = _tag.split(',');
 
-    __tag.forEach(function(item, index){
-        console.log(item)
-        if(!tools.isObjectID(item)){
-            return res.json({retCode:10014, msg:'请选择标签', data:null});
-        }
-    });
-
-    if(!_cate){
+    if(!_cate || !tools.isObjectID(_cate)){
         return res.json({retCode:10015, msg:'请选择分类', data:null});
     }
-    var __category = _cate.split(',');
-    __category.forEach(function(item, index){
-        if(!tools.isObjectID(item)){
-            return res.json({retCode:10015, msg:'请选择分类', data:null});
-        }
-    }); 
 
    	if(!_title){
    		res.json({retCode:10018, msg:'请填写标题', data:null});
@@ -57,9 +44,9 @@ var _add = function(req, res){
    	}
    	var _tagArr = _tag.split(',');
    	var _categoryArr = _cate.split(',');
-   	_title = xss(_title);
-   	_content = xss(_content);
-   	_previewText = xss(_previewText);
+   	// _title = xss(_title);
+   	// _content = xss(_content);
+   	// _previewText = xss(_previewText);
 
    	var _allPinyin = tools.getPinyin(_title, true);
    	var _sglPinyin = tools.getPinyin(_title, false);
@@ -94,7 +81,6 @@ var _add = function(req, res){
  * @param {string} id 文章id
  */
 var _delete = function(req, res){
-    
     var _articleID = req.query.id;
     if(!_articleID || !tools.isObjectID(_articleID)){
         return res.json({retCode:10012, msg:'id无效', data:null});
@@ -125,7 +111,6 @@ var _delete = function(req, res){
             res.json({retCode:0, msg:'删除成功', data:null});
         });
     }
-
     _isExist().then(__del);
 }
 
@@ -140,6 +125,7 @@ var _delete = function(req, res){
  */
 var _edit = function(req, res){
     var _articleID = req.body.id;
+
     if(!_articleID || !tools.isObjectID(_articleID)){
         return res.json({retCode:10012, msg:'id无效', data:null});
     }
@@ -148,25 +134,13 @@ var _edit = function(req, res){
     var _title = req.body.title;
     var _previewText = req.body.previewText;
     var _content = req.body.content;
-    if(!_tag){
+    if(!_tag || !tools.isObjectID(_tag)){
         return res.json({retCode:10014, msg:'请选择标签', data:null});
     }
-    var __tag = _tag.split(',');
-    __tag.forEach(function(item, index){
-        if(!tools.isObjectID(item)){
-            return res.json({retCode:10014, msg:'请选择标签', data:null});
-        }
-    });
 
-    if(!_cate){
+    if(!_cate || !tools.isObjectID(_cate)){
         return res.json({retCode:10015, msg:'请选择分类', data:null});
     }
-    var __category = _cate.split(',');
-    __category.forEach(function(item, index){
-        if(!tools.isObjectID(item)){
-            return res.json({retCode:10015, msg:'请选择分类', data:null});
-        }
-    }); 
 
     if(!_title){
         res.json({retCode:10018, msg:'请填写标题', data:null});
@@ -192,6 +166,7 @@ var _edit = function(req, res){
             if(!doc){
                 return res.json({retCode:10021, msg:'查询无该记录', data:null});
             }
+
             defer.resolve();
         });
         return defer.promise;
@@ -199,6 +174,11 @@ var _edit = function(req, res){
 
     //编辑
     var __edit = function(){
+        var _allPinyin = tools.getPinyin(_title, true);
+        var _sglPinyin = tools.getPinyin(_title, false);
+
+        var _pinyin = [];
+        _pinyin = _pinyin.concat(_allPinyin, _sglPinyin);
         //实体
         var entity = {
             title:_title,
@@ -213,10 +193,10 @@ var _edit = function(req, res){
             if(err){
                return res.sendStatus(500);
             }
-            console.log(ret);
             res.json({retCode:0, msg:'更新成功', data:null})
         });
     }
+    _isExist().then(__edit);
 }
 
 /**
@@ -232,7 +212,7 @@ var _getList = function(req, res){
     var _tag = req.query.tag;
     var _cate = req.query.category;
     var filterObj = {};
-
+    var optObj = {};
     if(!!_keyword){
         _keyword = decodeURI(_keyword);
         console.log(_keyword)
@@ -256,26 +236,50 @@ var _getList = function(req, res){
         // ]
         filterObj.$text = {};
         filterObj.$text.$search = _keyword;
+        optObj.score = {};
+        optObj.score.$meta = 'textScore';
     }
 
     if(!!_tag){
         filterObj.tag = {};
-        filterObj.tag.name.$all = _tag.split(',');
+        filterObj['tag.name']= _tag;
     }
     // if(!!_cate){
     //     filterObj.category = {
     //         $elemMatch:_tag
     //     }
     // }
-    ArticleModel.find(filterObj).skip(_pageIndex * _pageSize).limit(_pageSize).populate(['tag', 'category']).exec(function(err, flist){
+    ArticleModel.find(filterObj, optObj).skip(_pageIndex * _pageSize).limit(_pageSize).populate(['tag', 'category']).sort({'_id':-1}).exec(function(err, flist){
         if(err){
             return res.sendStatus(500);
         }
         res.json({retCode:0, msg:'查询成功', data:flist});
-    })
+    });
+}
+
+/**
+ * getDetail 获取详情
+ * @param {string} id 文章id
+ */
+var _getDetail = function(req, res){
+    var _articleID = req.query.id;
+    if(!_articleID || !tools.isObjectID(_articleID)){
+        return res.json({retCode:10012, msg:'id无效', data:null});
+    }
+    ArticleModel.findByIdAndUpdate(_articleID, {$inc:{'readNum':1}}).populate(['category', 'tag']).exec(function(err, doc){
+        if(err){
+            return res.sendStatus(500);
+        }
+        if(!doc){
+            return res.json({retCode:10021, msg:'查询无该记录', data:null});
+        }
+        res.json({retCode:0, msg:'查询成功', data:doc});
+    });
+
 }
 
 exports.add = _add;
 exports.delete = _delete;
 exports.edit = _edit;
 exports.getList = _getList;
+exports.getDetail = _getDetail;

@@ -15,20 +15,16 @@ var ArticleSchema = new mongoose.Schema({
 		type:Number,
 		require:false
 	},
-	category:[
-		{
-			type:mongoose.Schema.ObjectId,
-			require:true,
-			ref:'Category'
-		}
-	],
-	tag:[
-		{
-			type:mongoose.Schema.ObjectId,
-			require:true,
-			ref:'Tag'
-		}
-	],
+	category:{
+		type:mongoose.Schema.ObjectId,
+		require:true,
+		ref:'Category'
+	},
+	tag:{
+		type:mongoose.Schema.ObjectId,
+		require:true,
+		ref:'Tag'
+	},
 	readNum:{
 		type:Number,
 		require:true,
@@ -66,5 +62,5 @@ var ArticleSchema = new mongoose.Schema({
 		}
 	]
 });
-ArticleSchema.index({'$**': 'text'})
+ArticleSchema.index({'$**': 'text'});
 exports= module.exports = ArticleSchema; 

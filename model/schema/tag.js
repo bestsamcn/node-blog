@@ -11,6 +11,11 @@ var TagSchema = new mongoose.Schema({
         type:Number,
         require:true,
         default:Date.now()
+    },
+    clickNum:{
+        type:Number,
+        require:true,
+        default:0
     }
 });
 exports = module.exports = TagSchema;
