@@ -9,5 +9,6 @@ router.get('/delete', interceptor.valifyToken, interceptor.checkAdminLogin, arti
 router.post('/edit', interceptor.valifyToken, interceptor.checkAdminLogin, articleService.edit);
 router.get('/getList', articleService.getList);
 router.get('/getDetail', articleService.getDetail);
+router.post('/like', articleService.like);
 
 module.exports = router;

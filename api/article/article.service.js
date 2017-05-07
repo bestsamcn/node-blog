@@ -266,16 +266,117 @@ var _getDetail = function(req, res){
     if(!_articleID || !tools.isObjectID(_articleID)){
         return res.json({retCode:10012, msg:'id无效', data:null});
     }
-    ArticleModel.findByIdAndUpdate(_articleID, {$inc:{'readNum':1}}).populate(['category', 'tag']).exec(function(err, doc){
-        if(err){
-            return res.sendStatus(500);
-        }
-        if(!doc){
-            return res.json({retCode:10021, msg:'查询无该记录', data:null});
-        }
-        res.json({retCode:0, msg:'查询成功', data:doc});
-    });
 
+
+    //首先查询当前id的记录是否存在
+    var _isExistRecord = function(){
+        var defer = Q.defer();
+        ArticleModel.findById(_articleID, function(ferr, fdoc){
+            if(ferr){
+                res.sendStatus(500);
+                res.end();
+                return;
+            }
+            if(!fdoc){
+                return res.json({retCode:10018, msg:'查找无该记录', data:null});
+            }
+            defer.resolve();
+        });
+        return defer.promise;
+    }
+
+    //首先查询当前id的记录
+    var _findCurrRecord = function(){
+        var defer = Q.defer();
+        ArticleModel.findByIdAndUpdate(_articleID, {$inc:{'readNum':1}}).populate(['category', 'tag']).exec( function(ferr, fdoc){
+            if(ferr){
+                res.sendStatus(500);
+                res.end();
+                return;
+            }
+            defer.resolve(fdoc);
+        });
+        return defer.promise;
+    }
+
+    //查询上一条记录
+    var _findPrevRecord = function(){
+        var defer = Q.defer();
+        ArticleModel.find({_id:{$lt:_articleID}}).limit(1).sort({_id:-1}).exec(function(ferr, fdoc){
+            if(ferr){
+                res.sendStatus(500);
+                res.end();
+                return;
+            }
+            defer.resolve(fdoc);
+        });
+        return defer.promise;
+    }
+
+    //查询下一条记录
+    var _findNextRecord = function(){
+        var defer = Q.defer();
+        ArticleModel.find({_id:{$gt:_articleID}}).limit(1).sort({_id:-1}).exec(function(ferr, fdoc){
+            if(ferr){
+                res.sendStatus(500);
+                res.end();
+                return;
+            }
+            defer.resolve(fdoc);
+        });
+        return defer.promise;
+    }
+    //统计返回
+    var _responseRecord = function(){
+        Q.all([_findCurrRecord(), _findPrevRecord(), _findNextRecord()]).then(function(fList){
+            var obj = {};
+            obj.curr = fList[0] || null;
+            obj.prev = fList[1][0] || null;
+            obj.next = fList[2][0] || null;
+            res.json({retCode:0, msg:'查询成功', data:obj});
+        })
+    }
+    _isExistRecord().then(_responseRecord);
+
+}
+
+/**
+ * 点赞
+ * @param {strign} id 文章id
+ */
+var _like = function(req, res){
+    var _articleID = req.body.id;
+    if(!_articleID || !tools.isObjectID(_articleID)){
+        return res.json({retCode:10012, msg:'id无效', data:null});
+    }
+    //首先查询当前id的记录是否存在
+    var _isExistRecord = function(){
+        var defer = Q.defer();
+        ArticleModel.findById(_articleID, function(ferr, fdoc){
+            if(ferr){
+                res.sendStatus(500);
+                res.end();
+                return;
+            }
+            if(!fdoc){
+                return res.json({retCode:10018, msg:'查找无该记录', data:null});
+            }
+            defer.resolve();
+        });
+        return defer.promise;
+    }
+
+    var _update = function(){
+        ArticleModel.findByIdAndUpdate(_articleID, {$inc:{'likeNum':1}}, function(ferr, fdoc){
+            if(ferr){
+                res.sendStatus(500);
+                res.end();
+                return;
+            }
+            return res.json({retCode:0, msg:'点赞成功', data:null});
+        });
+    }
+    _isExistRecord().then(_update);
 }
 
 exports.add = _add;
@@ -283,3 +384,4 @@ exports.delete = _delete;
 exports.edit = _edit;
 exports.getList = _getList;
 exports.getDetail = _getDetail;
+exports.like = _like;
