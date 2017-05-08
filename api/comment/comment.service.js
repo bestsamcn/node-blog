@@ -60,6 +60,7 @@ var _add = function(req, res){
 
     //录入
     var __add = function(){
+        var defer = Q.defer();
     	var _createIp = req.ip !== '::1' &&　$$.getClientIp(req).match(/\d+\.\d+\.\d+\.\d+/)[0] || '';
     	var entity = {
     		article:_articleID,
@@ -75,13 +76,25 @@ var _add = function(req, res){
     	CommentModel.create(entity, function(cerr, cdoc){
 			if(cerr || !cdoc){
 				res.sendStatus(500);
-				res.end();
 				return;
 			}
-			res.json({retCode:0, msg:'创建成功', data:cdoc});
+            defer.resolve(cdoc._id);
 		});
+        return defer.promise;
     }
-    _isExist().then(__add);
+
+    //重新查找关联数据
+    var _return = function(cid){
+        CommentModel.findById(cid).populate('parentComment').exec(function(err, fdoc){
+            if(err || !fdoc){
+                res.sendStatus(500);
+                return;
+            }
+            res.json({retCode:0, msg:'创建成功', data:fdoc});
+        })
+    }
+
+    _isExist().then(__add).then(_return);
 }
 
 
@@ -134,11 +147,11 @@ var _getList = function(req, res){
     var _pageSize = parseInt(req.query.pageSize) || 10;
     var _articleID = req.query.id;
     var _keyword = req.query.keyword;
-    if(!_articleID || !$$.isObjectID(_articleID)){
+    if(!!_articleID && !$$.isObjectID(_articleID)){
         return res.json({retCode:10012, msg:'id无效', data:null});
     }
     var filterObj = {};
-    filterObj.article = _articleID;
+    !!_articleID && (filterObj.article = _articleID);
     if(!!_keyword){
         _keyword = decodeURI(_keyword);
         var reg = new RegExp(_keyword, 'gim');
