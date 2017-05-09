@@ -168,13 +168,31 @@ var _getList = function(req, res){
             }        
         ]
     }
+    //计算记录总数
+    var _getTotal = function() {
+        var defer = Q.defer();
+        CommentModel.count(filterObj, function(cerr, ctotal) {
+            if (cerr) {
+                res.sendStatus(500);
+                res.end();
+                return;
+            }
+            defer.resolve(ctotal);
+        });
+        return defer.promise;
+    }
 
-    CommentModel.find(filterObj).skip(_pageIndex * _pageSize).limit(_pageSize).populate(['parentComment']).sort({'_id':-1}).exec(function(err, flist){
-        if(err){
-            return res.sendStatus(500);
-        }
-        res.json({retCode:0, msg:'查询成功', data:flist});
-    });
+    var _return = function(_total){
+        CommentModel.find(filterObj).skip(_pageIndex * _pageSize).limit(_pageSize).populate(['parentComment','article']).sort({'_id':-1}).exec(function(err, flist){
+            if(err){
+                return res.sendStatus(500);
+            }
+            res.json({retCode:0, msg:'查询成功', data:flist, pageIndex:_pageIndex+1, pageSize:_pageSize, total:_total});
+        });
+    }
+    
+
+    _getTotal().then(_return);
 }
 
 var _like = function(req, res){
@@ -205,11 +223,8 @@ var _like = function(req, res){
         return defer.promise;
     }
 
-
     //更新
     var _update = function(){
-			
-
 		CommentModel.findByIdAndUpdate(_commentID, filterObj).populate(['parentComment']).exec(function(err, doc){
 
 	    	if(err || !doc){
@@ -219,9 +234,7 @@ var _like = function(req, res){
 	    	res.json({retCode:0, msg:'更新成功', data:null});
 	    });    
     }
-    
     _isExist().then(_update);
-     
 }
 
 exports.add = _add;

@@ -1,4 +1,7 @@
 var ArticleModel = require('../../model').ArticleModel;
+var TagModel = require('../../model').TagModel;
+var CategoryModel = require('../../model').CategoryModel;
+var CommentModel = require('../../model').CommentModel;
 var tools = require('../../tools');
 var _ = require('lodash');
 var Q = require('q');
@@ -10,9 +13,11 @@ var xss = require('xss');
 
 /**
  * 添加文章
- * @param {string} tag 标签列表
- * @param {string} category 分类列表
+ * @param {string} tag 标签id
+ * @param {string} category 分类id
  * @param {string} content 文章内容html 
+ * @param {string} title 标题 
+ * @param {string} previewText 导读 
  */
 var _add = function(req, res){
     var _tag = req.body.tag;
@@ -57,23 +62,56 @@ var _add = function(req, res){
 
 
    	//实体
-   	var entity = {
-   		title:_title,
-   		previewText:_previewText,
-   		tag:_tagArr,
-   		category:_categoryArr,
-   		content:_content,
-   		pinYin:_pinyin,
-   		createTime:Date.now(),
-   		poster:_poster
-   	}
-   	ArticleModel.create(entity, function(err, doc){
-   		if(err || !doc){
-   			res.sendStatus(500);
-   			return;
-   		}
-   		res.json({retCode:0, msg:'发布成功', data:null});
-   	});
+    var _create = function(){
+        var defer = Q.defer();
+       var entity = {
+            title:_title,
+            previewText:_previewText,
+            tag:_tagArr,
+            category:_categoryArr,
+            content:_content,
+            pinYin:_pinyin,
+            createTime:Date.now(),
+            poster:_poster
+        }
+        ArticleModel.create(entity, function(err, doc){
+            if(err || !doc){
+                res.sendStatus(500);
+                return;
+            }
+            defer.resolve(doc);
+            
+        }); 
+        return defer.promise;
+    }
+
+    //添加标签文章总数
+    var _setTag = function(doc){
+        var defer = Q.defer();
+        TagModel.update({_id:_tag}, {$inc:{'totalArticle':1}}, function(err, ret){
+            console.log(ret)
+            if(err || !ret.ok){
+                res.sendStatus(500);
+                return;
+            }
+            defer.resolve(doc);
+        });
+        return defer.promise;
+    }
+
+    //添加分类文章总数
+    var _setCate = function(doc){
+        CategoryModel.update({_id:_cate}, {$inc:{'totalArticle':1}}, function(err, ret){
+            console.log(ret)
+            if(err || !ret.ok){
+                res.sendStatus(500);
+                return;
+            }
+            res.json({retCode:0, msg:'发布成功', data:doc}); 
+        });
+           
+    }
+   	_create().then(_setTag).then(_setCate)
 }
 
 /**
@@ -211,6 +249,7 @@ var _getList = function(req, res){
     var _keyword = req.query.keyword;
     var _tag = req.query.tag;
     var _cate = req.query.category;
+    var _type = req.query.type;
     var filterObj = {};
     var optObj = {};
     if(!!_keyword){
@@ -244,18 +283,65 @@ var _getList = function(req, res){
         filterObj.tag = {};
         filterObj['tag.name']= _tag;
     }
-    // if(!!_cate){
-    //     filterObj.category = {
-    //         $elemMatch:_tag
-    //     }
-    // }
-    ArticleModel.find(filterObj, optObj).skip(_pageIndex * _pageSize).limit(_pageSize).populate(['tag', 'category']).sort({'_id':-1}).exec(function(err, flist){
-        if(err){
-            return res.sendStatus(500);
-        }
-        res.json({retCode:0, msg:'查询成功', data:flist});
-    });
+
+    if(!!_type){
+        filterObj = {};
+        filterObj._id = {}
+    }
+
+    //计算记录总数
+    var _getTotal = function() {
+        var defer = Q.defer();
+        ArticleModel.count(filterObj, function(cerr, ctotal) {
+            if (cerr) {
+                res.sendStatus(500);
+                return;
+            }
+            var obj = {
+                _total:ctotal
+            };
+            defer.resolve(obj);
+        });
+
+        return defer.promise;
+    }
+
+
+    //查询评论最多的文章
+    var _getComment = function(obj){
+        var defer = Q.defer();
+        console.log('ffffffffffffff')
+        CommentModel.aggregate([{$group:{_id:'$article', count:{$sum:1}}}, {$project:{_id:1,count:1}}, {$limit:4}, {$sort:{count:-1}}]).exec(function(err, list){
+            if(err){
+                return res.sendStatus(500);
+            }
+            var temp = [];
+            for(var i=0 ;i<list.length; i++){
+                temp.push(list[i]._id);
+            }
+            obj._articleList = temp;
+            defer.resolve(obj);
+        });
+        return defer.promise;
+    }
+
+    //返回
+    var _return = function(obj){
+        !!obj._articleList && (filterObj._id = {$in:obj._articleList});
+        ArticleModel.find(filterObj, optObj).skip(_pageIndex * _pageSize).limit(_pageSize).populate(['tag', 'category']).sort({'_id':-1}).exec(function(err, flist){
+            if(err){
+                return res.sendStatus(500);
+            }
+            res.json({retCode:0, msg:'查询成功', data:flist, pageIndex:_pageIndex+1, pageSize:_pageSize, total:obj._total});
+        });
+    }
+
+    !_type && _getTotal().then(_return);
+    !!_type && _getTotal().then(_getComment).then(_return);
+    
 }
+
+
 
 /**
  * getDetail 获取详情
