@@ -257,33 +257,37 @@ var _getList = function(req, res){
     var sortObj = {};
     if(!!_keyword){
         _keyword = decodeURI(_keyword);
+        console.log(_keyword)
         var reg = new RegExp(_keyword, 'gim');
-        // filterObj.$or = [
-        //     {
-        //         'title':{
-        //             $regex:reg
-        //         }
-        //     },
-        //     {
-        //         'previewText':{
-        //             $regex:reg
-        //         }
-        //     },
-        //     {
-        //         'pinYin':{
-        //             $regex:reg
-        //         }
-        //     }
-        // ]
-        filterObj.$text = {};
-        filterObj.$text.$search = _keyword;
-        optObj.score = {};
-        optObj.score.$meta = 'textScore';
+        filterObj.$or = [
+            {
+                'title':{
+                    $regex:reg
+                }
+            },
+            {
+                'previewText':{
+                    $regex:reg
+                }
+            },
+            {
+                'pinYin':{
+                    $regex:reg
+                }
+            }
+        ]
+        // filterObj.$text = {};
+        // filterObj.$text.$search = _keyword;
+        // optObj.score = {};
+        // optObj.score.$meta = 'textScore';
     }
 
     if(!!_tag){
-        filterObj.tag = {};
-        filterObj['tag.name']= _tag;
+        filterObj['tag']= _tag;
+    }
+    if(!!_cate){
+        filterObj.category = {};
+        filterObj['category'] = _cate;
     }
     if(!!_type){
         filterObj = {};

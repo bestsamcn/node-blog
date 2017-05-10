@@ -6,6 +6,7 @@ var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
 var globalConfig = require('./config');
 var cors = require('cors');
+var redisdb = require('./model/connect').redisClient;
 
 var app = express();
 
@@ -40,7 +41,24 @@ app.use('/', index);
 
 //接口
 require('./api')(app);
+//统计当前网站在线人数,放在路由前面，方便在路由中展示
+app.use(function(req, res, next) {
+    //以用户浏览器为标准，非会员登录
+    var ua = req.headers['user-agent'];
+    reidsdb.zadd('online', Date.now(), ua, next);
+});
 
+app.use(function(req, res, next) {
+    var min = 60 * 1000;
+    //上一分钟
+    var ago = Date.now() - min;
+    reidsdb.zrevrangebyscore('online', '+inf', ago, function(err, users) {
+        if (err) return next(err);
+        req.online = users;
+        app.locals.onlineNumber = users.length;
+        next();
+    });
+});
 
 //错误处理
 app.use(function(req, res, next) {
