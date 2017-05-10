@@ -1,7 +1,9 @@
 var AdminModel = require('../model').AdminModel;
+var CountModel = require('../model').CountModel;
 var redisClient = require('../model/connect').redisClient;
 var jwt = require('jwt-simple');
 var GLOBAL_CONFIG = require('../config');
+var $$ = require('../tools');
 
 
 //将用户退出后的token保存到redis，指定时间后自动删除
@@ -64,6 +66,39 @@ var _checkAdminLogin = function(req, res, next){
     next();
 }
 
+//用户访问日志
+var _accessCount = function(req,res,next){
+	var _url = req.path;
+	var _ip = req.ip !== '::1' &&　$$.getClientIp(req).match(/\d+\.\d+\.\d+\.\d+/)[0] || '120.77.83.242';
+
+	var _getCity = function(){
+		var defer = Q.defer();
+		$$.getIpInfo(_ip, function(err, obj){
+			if(err){
+				console.log(err,'获取城市出错')
+				return next();
+			}
+			defer.resolve(obj);
+		});
+		return defer.promise;
+	}
+	var _setInfo = function(obj){
+		CountModel.create({
+			accessIp:_ip,
+			apiName:_url,
+			createTime:Date.now(),
+			city:obj.city
+		},function(err,doc){
+			if(err){
+				return next(err);
+			}
+			next();
+		});
+	}
+	_getCity().then(_setInfo);
+}
+
 exports.expireToken = _expireToken;
 exports.valifyToken = _valifyToken;
 exports.checkAdminLogin = _checkAdminLogin;
+exports.accessCount = _accessCount;

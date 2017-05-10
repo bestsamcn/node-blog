@@ -1,4 +1,3 @@
-require('../connect');
 var mongoose =  require('mongoose');
 
 var TagSchema = new mongoose.Schema({

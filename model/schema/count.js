@@ -1,25 +1,25 @@
 var mongoose =  require('mongoose');
 
-var CategorySchema = new mongoose.Schema({
-    name:{
+var CountSchema = new mongoose.Schema({
+    accessip:{
         type:String,
-        require:true,
-        unique:true
+        require:true
     },
     createTime:{
         type:Number,
         require:true,
         default:Date.now()
     },
-    clickNum:{
+    apiName:{
         type:Number,
         require:true,
         default:0
     },
-    totalArticle:{
-        type:Number,
+    city:{
+        type:String,
         require:false,
-        default:0
+        default:''
     }
+
 });
-exports = module.exports = CategorySchema;
+exports = module.exports = CountSchema;

@@ -1,6 +1,8 @@
 var PY = require('pinyin');
 var _ = require('lodash');
 var mongoose = require('mongoose');
+var http = require('http');
+var util = require('util');
 
 /**
  * @function getClientIp获取客户端ip，
@@ -38,6 +40,29 @@ var _getClientIp = function (req) {
     return ipAddress;
 };
 
+/**
+ * 根据 ip 获取获取地址信息
+ */
+var _getIpInfo = function(ip, cb) {
+    var sina_server = 'http://int.dpool.sina.com.cn/iplookup/iplookup.php?format=json&ip=';
+    var url = sina_server + ip;
+
+    http.get(url, function(res) {
+        var code = res.statusCode;
+        console.log(code,'tttttttttttttttttttt')
+        if (code == 200) {
+            res.on('data', function(data) {
+                try {
+                    cb(null, JSON.parse(data));
+                } catch (err) {
+                    cb(err);
+                }
+            });
+        } else {
+            cb({ code: code });
+        }
+    }).on('error', function(e) { cb(e); });
+};
 
 /**
  * @function generateArray 生成全数组形式的数据
@@ -149,3 +174,5 @@ exports.dateFormat = _dateFormat;
 exports.unhtml = _unhtml;
 exports.tohtml = _tohtml;
 exports.isObjectID = _isObjectID;
+exports.getIpInfo = _getIpInfo;
+
