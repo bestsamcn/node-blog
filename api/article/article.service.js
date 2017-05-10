@@ -241,6 +241,8 @@ var _edit = function(req, res){
  * 文章列表
  * @param {number} pageIndex 分页索引
  * @param {number} pageSize 分页体积
+ * @param {string} keyword 关键字
+ * @param {number} type 查询的类型，1是评论最多，2是浏览量最多
  * @return {data,total} 返回 
  */
 var _getList = function(req, res){
@@ -252,9 +254,9 @@ var _getList = function(req, res){
     var _type = req.query.type;
     var filterObj = {};
     var optObj = {};
+    var sortObj = {};
     if(!!_keyword){
         _keyword = decodeURI(_keyword);
-        console.log(_keyword)
         var reg = new RegExp(_keyword, 'gim');
         // filterObj.$or = [
         //     {
@@ -283,11 +285,14 @@ var _getList = function(req, res){
         filterObj.tag = {};
         filterObj['tag.name']= _tag;
     }
-
     if(!!_type){
         filterObj = {};
-        filterObj._id = {}
+        (_type == 2) && (sortObj.readNum = -1);
+        sortObj._id = -1;
+    }else{
+        sortObj._id = -1;
     }
+
 
     //计算记录总数
     var _getTotal = function() {
@@ -302,15 +307,14 @@ var _getList = function(req, res){
             };
             defer.resolve(obj);
         });
-
         return defer.promise;
     }
 
 
     //查询评论最多的文章
     var _getComment = function(obj){
+        obj = obj || {};
         var defer = Q.defer();
-        console.log('ffffffffffffff')
         CommentModel.aggregate([{$group:{_id:'$article', count:{$sum:1}}}, {$project:{_id:1,count:1}}, {$limit:4}, {$sort:{count:-1}}]).exec(function(err, list){
             if(err){
                 return res.sendStatus(500);
@@ -327,8 +331,8 @@ var _getList = function(req, res){
 
     //返回
     var _return = function(obj){
-        !!obj._articleList && (filterObj._id = {$in:obj._articleList});
-        ArticleModel.find(filterObj, optObj).skip(_pageIndex * _pageSize).limit(_pageSize).populate(['tag', 'category']).sort({'_id':-1}).exec(function(err, flist){
+        !!obj._articleList && (filterObj._id = {}) && (filterObj._id.$in=obj._articleList);
+        ArticleModel.find(filterObj, optObj).skip(_pageIndex * _pageSize).limit(_pageSize).populate(['tag', 'category']).sort(sortObj).exec(function(err, flist){
             if(err){
                 return res.sendStatus(500);
             }
@@ -338,7 +342,6 @@ var _getList = function(req, res){
 
     !_type && _getTotal().then(_return);
     !!_type && _getTotal().then(_getComment).then(_return);
-    
 }
 
 

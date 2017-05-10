@@ -35,7 +35,7 @@ var _add = function(req, res) {
 		res.end();
 		return;
 	}
-	if (!_content || _content.length < 6) {
+	if (!_content || _content.length < 2) {
 		res.json({
 			retCode: 10017,
 			msg: '内容长度不能少于6位',
