@@ -7,6 +7,8 @@ var $$ = require('../../tools');
 var jwt = require('jwt-simple');
 var GLOBAL_CONFIG = require('../../config');
 var interceptor = require('../../interceptor');
+var CountModel = require('../../model').CountModel;
+var MessageModel = require('../../model').MessageModel;
 
 /**
  * 创建管理员
@@ -166,7 +168,191 @@ var _logout = function(req, res){
 	res.json({retCode:0, msg:'退出成功', data:null});
 }
 
+/**
+ * 获取访问记录
+ * @param {number} pageIndex 起始页
+ * @param {number} pageSize 页体积
+ * @param {number} type 1是查询全部， 2是查询昨天
+ * @param {string} ip 根据ip查询
+ * @param {string} keyword 根据关键字查询
+ */
+var _getAccessList = function(req, res){
+	var _pageIndex = parseInt(req.query.pageIndex) -1 || 0;
+    var _pageSize = parseInt(req.query.pageSize) || 10;
+    var _keyword = req.query.keyword;
+    var _ip = req.query.ip;
+    var _type= req.query.type;
+    var filterObj = {};
+    if(!!_keyword){
+    	_keyword = decodeURI(_keyword);
+        console.log(_keyword)
+        var reg = new RegExp(_keyword, 'gim');
+    	filterObj.$or = [
+    		{
+                'country':{
+                    $regex:reg
+                }
+            },
+            {
+                'province':{
+                    $regex:reg
+                }
+            },
+            {
+                'city':{
+                    $regex:reg
+                }
+            }
+    	]
+    }
+    if(!!_ip){
+    	filterObj.accessip = _ip;
+    }
+
+    //获取今天凌晨时间戳
+    var nowDate = new Date();
+    nowDate.setHours(0)
+    nowDate.setMinutes(0)
+    nowDate.setSeconds(0)
+    nowDate.setMilliseconds(0)
+    var todayTime = nowDate.getTime();
+
+    //一天的时间戳长度
+    var oneDayTime = 1000 * 60 * 60 * 24;
+    //昨天的整天的时间戳范围是(todayTime-oneDayTime)<= yestodayTime < todayTime
+    var yestodayTime = todayTime - oneDayTime;
+
+    if(!!_type && _type == 2){
+    	filterObj.createTime = {
+    		$gt: yestodayTime,
+    		$lte: todayTime
+    	}
+    }
+
+    //计算记录总数
+    var _getTotal = function() {
+        var defer = Q.defer();
+        CountModel.count(filterObj, function(cerr, ctotal) {
+            if (cerr) {
+                res.sendStatus(500);
+                return;
+            }
+            var obj = {
+            	_total:ctotal
+            }
+            defer.resolve(obj);
+        });
+        return defer.promise;
+    }
+
+    //获取分页
+    var _return = function(obj){
+
+    	CountModel.find(filterObj).skip(_pageIndex * _pageSize).limit(_pageSize).sort({'createTime':-1}).exec(function(err, list){
+	    	if(err){
+	    		return res.sendStatus(500);
+	    	}
+	    	res.json({retCode:0, msg:'查询成功', data:list, total:obj._total, pageIndex:_pageIndex+1, pageSize:_pageSize});
+	    });
+    }
+
+    _getTotal().then(_return);
+}
+
+/**
+ * 删除访问记录
+ */
+var _delAccess = function(req, res) {
+	var count_id = req.query.id;
+	if (!count_id || count_id.length !== 24) {
+		res.json({
+			retCode: 10018,
+			msg: '查找无该记录',
+			data: null
+		});
+		res.end();
+		return;
+	}
+	CountModel.findByIdAndRemove(count_id, function(rerr, rdoc) {
+		if (rerr) {
+			res.sendStatus(500);
+			return;
+		}
+
+		res.json({
+			retCode: 0,
+			msg: '删除成功',
+			data: null
+		});
+		res.end();
+	});
+}
+
+/**
+ * 获取各种需要总数
+ */
+var _getPreviewTotal = function(req, res){
+
+	//访问总数
+	var _getAccessTotal = function(){
+		var defer = Q.defer();
+		CountModel.count(function(err, total){
+			if(err){
+				res.sendStatus(500);
+				return;
+			}
+			var obj = {
+				accessTotal:total
+			}
+			defer.resolve(obj);
+		});
+		return defer.promise;
+	}
+
+	//昨天访问总数
+	var _getYestodayTotal = function(obj){
+		var defer = Q.defer();
+		//获取今天凌晨时间戳
+	    var nowDate = new Date();
+	    nowDate.setHours(0)
+	    nowDate.setMinutes(0)
+	    nowDate.setSeconds(0)
+	    nowDate.setMilliseconds(0)
+	    var todayTime = nowDate.getTime();
+
+	    //一天的时间戳长度
+	    var oneDayTime = 1000 * 60 * 60 * 24;
+	    //昨天的整天的时间戳范围是(todayTime-oneDayTime)<= yestodayTime < todayTime
+	    var yestodayTime = todayTime - oneDayTime;
+	    CountModel.count({createTime:{$gt: yestodayTime, $lte: todayTime}}, function(err, total){
+			if(err){
+				res.sendStatus(500);
+				return;
+			}
+			
+			obj.accessYestodayTotal = total
+			defer.resolve(obj);
+		});
+		return defer.promise;
+	}
+
+	//未读消息
+	var _getUnreadMessage = function(obj){
+		MessageModel.count({isRead:false}, function(err, total){
+			if(err){
+				return res.sendStatus(500);
+			}
+			obj.unreadMessageTotal = total;
+			res.json({retCode:0, msg:'查询成功', data:obj});
+		});
+	}
+	_getAccessTotal().then(_getYestodayTotal).then(_getUnreadMessage);
+
+}
 
 exports.create = _create;
 exports.login = _login;
 exports.logout = _logout;
+exports.getAccessList = _getAccessList;
+exports.getPreviewTotal = _getPreviewTotal;
+exports.delAccess = _delAccess;

@@ -16,6 +16,7 @@ var xss = require('xss');
  * @param {string} tag 标签id
  * @param {string} category 分类id
  * @param {string} content 文章内容html 
+ * @param {string} codeContent 文章的文本格式源码 
  * @param {string} title 标题 
  * @param {string} previewText 导读 
  */
@@ -23,6 +24,7 @@ var _add = function(req, res){
     var _tag = req.body.tag;
     var _cate = req.body.category;
     var _content = req.body.content;
+    var _codeContent = req.body.codeContent;
     var _title = req.body.title;
     var _previewText = req.body.previewText;
     var _poster = req.body.poster || '';
@@ -43,7 +45,7 @@ var _add = function(req, res){
    		res.json({retCode:10017, msg:'请添加导读', data:null});
    		return;
    	}
-   	if(!_content){
+   	if(!_content && _codeContent){
    		res.json({retCode:10016, msg:'请填写内容', data:null});
    		return;
    	}
@@ -70,6 +72,7 @@ var _add = function(req, res){
             tag:_tagArr,
             category:_categoryArr,
             content:_content,
+            codeContent:_codeContent,
             pinYin:_pinyin,
             createTime:Date.now(),
             poster:_poster
@@ -135,13 +138,49 @@ var _delete = function(req, res){
             if(!doc){
                 return res.json({retCode:10021, msg:'查询无该记录', data:null});
             }
-            defer.resolve();
+            defer.resolve(doc);
+        });
+        return defer.promise;
+    }
+
+    //删除文章关联的评论
+    var _delComment = function(doc){
+        var defer = Q.defer();
+        CommentModel.remove({article:_articleID}, function(err, ret){
+            if(err || ret.result.ok !== 1){
+                return res.sendStatus(500);
+            }
+            defer.resolve(doc);
+        });
+        return defer.promise;
+    }
+
+    //tag文章数减1
+    var _detag = function(doc){
+        var defer = Q.defer();
+        TagModel.update({_id:doc.tag}, {$inc:{totalArticle:-1}}, function(err, ret){
+            if(err || ret.ok !==1){
+                return res.sendStatus(500);
+            }
+            defer.resolve(doc);
+        });
+        return defer.promise;
+    }
+
+    //category文章数减1
+    var _decate = function(doc){
+        var defer = Q.defer();
+        CategoryModel.update({_id:doc.category}, {$inc:{totalArticle:-1}}, function(err, ret){
+            if(err || ret.ok !==1){
+                return res.sendStatus(500);
+            }
+            defer.resolve(doc);
         });
         return defer.promise;
     }
 
     //删除
-    var __del = function(){
+    var __del = function(doc){
         ArticleModel.findByIdAndRemove(_articleID, function(err, doc){
             if(err || !doc){
                 return res.sendStatus(500);
@@ -149,7 +188,7 @@ var _delete = function(req, res){
             res.json({retCode:0, msg:'删除成功', data:null});
         });
     }
-    _isExist().then(__del);
+    _isExist().then(_delComment).then(_detag).then(_decate).then(__del);
 }
 
 /**
@@ -172,6 +211,7 @@ var _edit = function(req, res){
     var _title = req.body.title;
     var _previewText = req.body.previewText;
     var _content = req.body.content;
+    var _codeContent = req.body.codeContent;
     if(!_tag || !tools.isObjectID(_tag)){
         return res.json({retCode:10014, msg:'请选择标签', data:null});
     }
@@ -188,10 +228,11 @@ var _edit = function(req, res){
         res.json({retCode:10017, msg:'请添加导读', data:null});
         return;
     }
-    if(!_content){
+    if(!_content || !_codeContent){
         res.json({retCode:10016, msg:'请填写内容', data:null});
         return;
     }
+
 
     //是否存在
     var _isExist = function(){
@@ -214,7 +255,6 @@ var _edit = function(req, res){
     var __edit = function(){
         var _allPinyin = tools.getPinyin(_title, true);
         var _sglPinyin = tools.getPinyin(_title, false);
-
         var _pinyin = [];
         _pinyin = _pinyin.concat(_allPinyin, _sglPinyin);
         //实体
@@ -224,6 +264,7 @@ var _edit = function(req, res){
             tag:_tag.split(','),
             category:_cate.split(','),
             content:_content,
+            codeContent:_codeContent,
             pinYin:_pinyin,
             lastEditTime:Date.now()
         }

@@ -69,23 +69,23 @@ var _add = function(req, res) {
 }
 
 /**
- * @/api/message/getList 获取留言列表分页
- * @pageIndex {Number, require} 分页索引
- * @pageSize {Number, require} 分页体积
- * @return { retCode, msg, data, total, pageIndex, pageSize } 返回 
+* @param {number} pageIndex 
+* @param {number} pageSize 
+* @param {number} type 1已读，2未读 
+* @param {string} search 关键字 
  */
 var _getList = function(req, res, next) {
 	var _pageIndex = parseInt(req.query.pageIndex) - 1 || 0,
 		_pageSize = parseInt(req.query.pageSize) || 10;
-	var _filter = req.query.filter;
+	var _type = req.query.type;
 	var _search = req.query.search;
 	var filterObj = {};
 
 	//过滤
-	if(typeof _filter){
-		if(_filter === 'isRead'){
+	if(typeof _type){
+		if(_type === '1'){
 			filterObj.isRead = true;
-		}else if(_filter === 'unRead'){
+		}else if(_type === '2'){
 			filterObj.isRead = false;
 		}
 	}

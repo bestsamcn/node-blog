@@ -4,6 +4,7 @@ var redisClient = require('../model/connect').redisClient;
 var jwt = require('jwt-simple');
 var GLOBAL_CONFIG = require('../config');
 var $$ = require('../tools');
+var Q = require('q');
 
 
 //将用户退出后的token保存到redis，指定时间后自动删除
@@ -70,32 +71,67 @@ var _checkAdminLogin = function(req, res, next){
 var _accessCount = function(req,res,next){
 	var _url = req.path;
 	var _ip = req.ip !== '::1' &&　$$.getClientIp(req).match(/\d+\.\d+\.\d+\.\d+/)[0] || '120.77.83.242';
+	var token = req.body['x-access-token'] || req.query['x-access-token'] || req.headers['x-access-token'];
 
-	var _getCity = function(){
+	//是否是管理员
+	var _isAdmin = function(){
 		var defer = Q.defer();
-		$$.getIpInfo(_ip, function(err, obj){
+		if(!token) {
+			defer.resolve();
+			return defer.promise;
+		};
+		var _userID = jwt.decode(token, GLOBAL_CONFIG.TOKEN_SECRET).iss;
+		AdminModel.findById({_id:_userID}, function(ferr, fdoc){
+
+			if(ferr){
+				return next(500);
+			}
+			if(!fdoc){
+				return defer.resolve();
+			}
+			return next();
+		});
+		return defer.promise;
+	}
+
+	//获取地址
+	var _getAddress = function(){
+		var defer = Q.defer();
+		$$.getIpInfo(_ip, function(err, res){
 			if(err){
 				console.log(err,'获取城市出错')
 				return next();
 			}
-			defer.resolve(obj);
+			var obj = {};
+			if(res.ret == -1){
+				obj.accessip = _ip;
+				obj.apiName = _url;
+				obj.address = {};
+				obj.address.country = '国家';
+				obj.address.province = '省份';
+				obj.address.city = '城市';
+				obj.address.district = '区域';
+				defer.resolve(obj);
+			}else{
+				obj.accessip = _ip;
+				obj.apiName = _url;
+				obj.address.country = res.country;
+				obj.address.city = res.city;
+				obj.address.district = res.district;
+				defer.resolve(obj);
+			}
 		});
 		return defer.promise;
 	}
 	var _setInfo = function(obj){
-		CountModel.create({
-			accessIp:_ip,
-			apiName:_url,
-			createTime:Date.now(),
-			city:obj.city
-		},function(err,doc){
+		CountModel.create(obj ,function(err,doc){
 			if(err){
 				return next(err);
 			}
 			next();
 		});
 	}
-	_getCity().then(_setInfo);
+	_isAdmin().then(_getAddress).then(_setInfo);
 }
 
 exports.expireToken = _expireToken;

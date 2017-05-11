@@ -11,14 +11,31 @@ var CountSchema = new mongoose.Schema({
         default:Date.now()
     },
     apiName:{
-        type:Number,
-        require:true,
-        default:0
-    },
-    city:{
         type:String,
-        require:false,
+        require:true,
         default:''
+    },
+    address:{
+        country:{
+            type:String,
+            require:false,
+            default:'' 
+        },
+        province:{
+            type:String,
+            require:false,
+            default:''
+        },
+        city:{
+            type:String,
+            require:false,
+            default:''
+        },
+        district:{
+            type:String,
+            require:false,
+            default:''
+        }
     }
 
 });

@@ -46,7 +46,7 @@ var _add = function(req, res){
     //是否存在
     var _isExist = function(){
         var defer = Q.defer();
-        ArticleModel.findById(_articleID, function(err, doc){
+        ArticleModel.findByIdAndUpdate(_articleID, {$inc:{commentNum:1}}, function(err, doc){
             if(err){
                 return res.sendStatus(500);
             }

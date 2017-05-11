@@ -30,6 +30,11 @@ var ArticleSchema = new mongoose.Schema({
 		require:true,
 		default:0
 	},
+	commentNum:{
+		type:Number,
+		require:true,
+		default:0
+	},
 	thumnail:{
 		type:String,
 		require:false
@@ -39,6 +44,10 @@ var ArticleSchema = new mongoose.Schema({
 		require:false
 	},
 	content:{
+		type:String,
+		require:true
+	},
+	codeContent:{
 		type:String,
 		require:true
 	},

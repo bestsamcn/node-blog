@@ -46,10 +46,8 @@ var _getClientIp = function (req) {
 var _getIpInfo = function(ip, cb) {
     var sina_server = 'http://int.dpool.sina.com.cn/iplookup/iplookup.php?format=json&ip=';
     var url = sina_server + ip;
-
     http.get(url, function(res) {
         var code = res.statusCode;
-        console.log(code,'tttttttttttttttttttt')
         if (code == 200) {
             res.on('data', function(data) {
                 try {

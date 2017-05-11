@@ -39,7 +39,7 @@ app.use(cors({
 var index = require('./routes/index');
 app.use('/', index);
 //用户访问记录
-// app.use(require('./interceptor').accessCount);
+app.use(require('./interceptor').accessCount);
 //接口
 require('./api')(app);
 //统计当前网站在线人数,放在路由前面，方便在路由中展示

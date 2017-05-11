@@ -5,5 +5,8 @@ var interceptor = require('../../interceptor');
 router.post('/create', adminService.create);
 router.post('/login', interceptor.valifyToken, adminService.login);
 router.get('/logout', interceptor.valifyToken, adminService.logout);
+router.get('/getAccessList', interceptor.valifyToken, adminService.getAccessList);
+router.get('/delAccess', interceptor.valifyToken, adminService.delAccess);
+router.get('/getPreviewTotal', interceptor.valifyToken, adminService.getPreviewTotal);
 
 module.exports = router;
