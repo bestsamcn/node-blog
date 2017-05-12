@@ -422,7 +422,9 @@ var _getDetail = function(req, res){
     //首先查询当前id的记录
     var _findCurrRecord = function(){
         var defer = Q.defer();
-        ArticleModel.findByIdAndUpdate(_articleID, {$inc:{'readNum':1}}).populate(['category', 'tag']).exec( function(ferr, fdoc){
+        var num = 0;
+        req.method.toLowerCase() != 'options' && num++;
+        ArticleModel.findByIdAndUpdate(_articleID, {$inc:{'readNum':num}}).populate(['category', 'tag']).exec( function(ferr, fdoc){
             if(ferr){
                 res.sendStatus(500);
                 res.end();
