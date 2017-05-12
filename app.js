@@ -36,24 +36,24 @@ app.use(cors({
 
 
 //路由
-var index = require('./routes/index');
-app.use('/', index);
+// var index = require('./routes/index');
+// app.use('/', index);
 //用户访问记录
-app.use(require('./interceptor').accessCount);
+
 //接口
 require('./api')(app);
 //统计当前网站在线人数,放在路由前面，方便在路由中展示
 app.use(function(req, res, next) {
     //以用户浏览器为标准，非会员登录
     var ua = req.headers['user-agent'];
-    reidsdb.zadd('online', Date.now(), ua, next);
+    redisdb.zadd('online', Date.now(), ua, next);
 });
 
 app.use(function(req, res, next) {
     var min = 60 * 1000;
     //上一分钟
     var ago = Date.now() - min;
-    reidsdb.zrevrangebyscore('online', '+inf', ago, function(err, users) {
+    redisdb.zrevrangebyscore('online', '+inf', ago, function(err, users) {
         if (err) return next(err);
         req.online = users;
         app.locals.onlineNumber = users.length;
@@ -70,8 +70,8 @@ app.use(function(req, res, next) {
 app.use(function(err, req, res, next) {
 	res.locals.message = err.message;
 	res.locals.error = req.app.get('env') === 'development' ? err : {};
-	res.status(err.status || 500);
-	res.render('error');
+    console.log(err)
+	res.sendStatus(err.status || 500);
 });
 
 module.exports = app;
