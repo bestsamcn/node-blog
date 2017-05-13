@@ -80,12 +80,14 @@ var _accessCount = function(req,res,next){
 			defer.resolve();
 			return defer.promise;
 		};
-		var _userID = jwt.decode(token, GLOBAL_CONFIG.TOKEN_SECRET).iss;
-		AdminModel.findById({_id:_userID}, function(ferr, fdoc){
 
+		var _userID = jwt.decode(token, GLOBAL_CONFIG.TOKEN_SECRET).iss;
+
+		AdminModel.findById({_id:_userID}, function(ferr, fdoc){
 			if(ferr){
 				return next(500);
 			}
+
 			if(!fdoc){
 				return defer.resolve();
 			}

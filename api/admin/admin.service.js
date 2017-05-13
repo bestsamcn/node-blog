@@ -128,7 +128,7 @@ var _login = function(req, res){
 		_password = sha1.update(_password).digest('hex');
 		if(fdoc.userType < 2){
 			res.json({
-				retCode:10004,
+				retCode:10009,
 				msg:'你无登录权限',
 				data:null
 			});

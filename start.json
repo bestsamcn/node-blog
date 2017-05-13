@@ -1,0 +1,15 @@
+{
+	"apps": [{
+		"name": "blog",
+		"script": "./bin/www",
+		"cwd": "./", 
+		"watch": [
+			"bin",
+			"api",
+		], 
+		"error_file": "/var/pm2/logs/app-err.log",
+		"out_file": "/var/pm2/logs/app-out.log", 
+		"log_date_format": "YYYY-MM-DD HH:mm Z" 
+	}]
+
+}
