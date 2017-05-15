@@ -85,7 +85,7 @@ var _accessCount = function(req,res,next){
 
 		AdminModel.findById({_id:_userID}, function(ferr, fdoc){
 			if(ferr){
-				return next(500);
+				return next();
 			}
 
 			if(!fdoc){
@@ -117,7 +117,9 @@ var _accessCount = function(req,res,next){
 			}else{
 				obj.accessip = _ip;
 				obj.apiName = _url;
+				obj.address = {};
 				obj.address.country = res.country;
+				obj.address.province = res.province;
 				obj.address.city = res.city;
 				obj.address.district = res.district;
 				defer.resolve(obj);
