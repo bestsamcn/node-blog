@@ -6,8 +6,8 @@ var NODE_ENV = process.env.BLOG_ENV || 'development',
 	NODE_REDIS_PORT = process.env.NODE_REDIS_PORT || 6379,
 	TEMPLATE_CACHE = ( NODE_ENV !== 'development' ),
 	MONGO_DATABASE = process.env.BLOG_MONGO_DATABASE || 'blog',
-	MONGO_USER = process.env.BLOG_MONGO_USER || 'samblog',
-	MONGO_PASSWORD = process.env.BLOG_MONGO_PASSWORD || 'samblog123';
+	MONGO_USER = process.env.BLOG_MONGO_USER || '',
+	MONGO_PASSWORD = process.env.BLOG_MONGO_PASSWORD || '';
 	MONGO_PORT = process.env.BLOG_MONGO_PORT || 27017;
 var _config = {
 	host:NODE_HOST,
