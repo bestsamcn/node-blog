@@ -10,5 +10,6 @@ router.post('/edit', interceptor.valifyToken, interceptor.checkAdminLogin, artic
 router.get('/getList', articleService.getList);
 router.get('/getDetail', articleService.getDetail);
 router.post('/like', articleService.like);
+router.post('/addPoster', interceptor.valifyToken, interceptor.checkAdminLogin, articleService.addPoster);
 
 module.exports = router;

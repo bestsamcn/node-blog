@@ -6,8 +6,8 @@ var tools = require('../../tools');
 var _ = require('lodash');
 var Q = require('q');
 var xss = require('xss');
-
-
+var formidable = require('formidable');
+var fs = require('fs');
 
 
 
@@ -37,33 +37,33 @@ var _add = function(req, res){
         return res.json({retCode:10015, msg:'请选择分类', data:null});
     }
 
-   	if(!_title){
-   		res.json({retCode:10018, msg:'请填写标题', data:null});
-   		return;
-   	}
-   	if(!_previewText){
-   		res.json({retCode:10017, msg:'请添加导读', data:null});
-   		return;
-   	}
-   	if(!_content && _codeContent){
-   		res.json({retCode:10016, msg:'请填写内容', data:null});
-   		return;
-   	}
-   	var _tagArr = _tag.split(',');
-   	var _categoryArr = _cate.split(',');
-   	// _title = xss(_title);
-   	// _content = xss(_content);
-   	// _previewText = xss(_previewText);
+    if(!_title){
+        res.json({retCode:10018, msg:'请填写标题', data:null});
+        return;
+    }
+    if(!_previewText){
+        res.json({retCode:10017, msg:'请添加导读', data:null});
+        return;
+    }
+    if(!_content && _codeContent){
+        res.json({retCode:10016, msg:'请填写内容', data:null});
+        return;
+    }
+    var _tagArr = _tag.split(',');
+    var _categoryArr = _cate.split(',');
+    // _title = xss(_title);
+    // _content = xss(_content);
+    // _previewText = xss(_previewText);
 
-   	var _allPinyin = tools.getPinyin(_title, true);
-   	var _sglPinyin = tools.getPinyin(_title, false);
+    var _allPinyin = tools.getPinyin(_title, true);
+    var _sglPinyin = tools.getPinyin(_title, false);
 
-   	var _pinyin = [];
-   	_pinyin = _pinyin.concat(_allPinyin, _sglPinyin);
+    var _pinyin = [];
+    _pinyin = _pinyin.concat(_allPinyin, _sglPinyin);
 
 
 
-   	//实体
+    //实体
     var _create = function(){
         var defer = Q.defer();
        var entity = {
@@ -114,7 +114,7 @@ var _add = function(req, res){
         });
            
     }
-   	_create().then(_setTag).then(_setCate)
+    _create().then(_setTag).then(_setCate)
 }
 
 /**
@@ -515,9 +515,65 @@ var _like = function(req, res){
     _isExistRecord().then(_update);
 }
 
+/**
+ * 上传图片
+ */
+var _addPoster = function(req, res){
+    var posterDir = 'public/img/';
+    if (!fs.existsSync(posterDir)) {
+        fs.mkdirSync(posterDir);
+    }
+    var form = new formidable.IncomingForm(); //创建上传表单
+    form.encoding = 'utf-8'; //设置编辑
+    form.uploadDir = posterDir; //设置上传目录
+    form.keepExtensions = true; //保留后缀
+    form.maxFieldsSize = 5 * 1024 * 1024; //文件大小
+    form.type = true;
+    form.parse(req, function(err, fields, files) {
+        if(err || !fields || !files){
+            return res.json({retCode:10026, msg:'参数错误', data:null});
+        }
+        var typeReg = /^image\/(pjpeg|jpeg|png|x-png|gif)$/ig
+        if(!typeReg.test(files.poster.type)){
+            res.json({retCode:100024,msg:'图片格式错误',data:null});
+            return;
+        }
+        if(files.poster.size > 5 * 1024 * 1024){
+            res.json({retCode:100025,msg:'图片不能大于5M',data:null});
+            return;
+        }
+        var suffix = '';
+        switch(files.poster.type){
+            case 'image/pjpeg':
+                suffix = 'jpg';
+                break;
+            case 'image/jpeg':
+                suffix = 'jpg';
+                break;
+            case 'image/gif':
+                suffix = 'gif';
+                break;
+            case 'image/x-png':
+                suffix = 'png';
+                break;
+            case 'image/png':{
+                suffix = 'png'
+            }
+        }
+        var crypto = require('crypto');
+        var md5 = crypto.createHash('md5');
+        var _posterName = md5.update('blog'+Date.now()).digest('hex')+'.'+suffix;
+        fs.renameSync(files.poster.path,form.uploadDir+_posterName);
+        global.avatarName = _posterName;
+        res.json({retCode:0,msg:'上传成功',data:{posterName:_posterName}});
+        res.end();
+    });
+}
+
 exports.add = _add;
 exports.delete = _delete;
 exports.edit = _edit;
 exports.getList = _getList;
 exports.getDetail = _getDetail;
 exports.like = _like;
+exports.addPoster = _addPoster;
