@@ -519,6 +519,7 @@ var _like = function(req, res){
  * 上传图片
  */
 var _addPoster = function(req, res){
+    console.log('ffffffffffffffff')
     var posterDir = 'public/img/';
     if (!fs.existsSync(posterDir)) {
         fs.mkdirSync(posterDir);
