@@ -212,6 +212,7 @@ var _edit = function(req, res){
     var _previewText = req.body.previewText;
     var _content = req.body.content;
     var _codeContent = req.body.codeContent;
+    var _poster = req.body.poster;
     if(!_tag || !tools.isObjectID(_tag)){
         return res.json({retCode:10014, msg:'请选择标签', data:null});
     }
@@ -266,6 +267,7 @@ var _edit = function(req, res){
             content:_content,
             codeContent:_codeContent,
             pinYin:_pinyin,
+            poster:_poster,
             lastEditTime:Date.now()
         }
         ArticleModel.findByIdAndUpdate(_articleID, {$set:entity}, function(err, ret){
