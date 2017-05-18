@@ -19,7 +19,7 @@ var _expireToken = function(token){
 //检测token,获取当前用户,如果在redis中检测到token证明该用户已经退出了，当前token无效
 var _valifyToken = function(req, res, next){
 	var token = req.body['x-access-token'] || req.query['x-access-token'] || req.headers['x-access-token'];
-	if(!token || token === 'null' || token === 'undefined'){
+	if(!token){
 		req.user = {};
 		req.isLogin = false;
 		req.token = null;
@@ -28,13 +28,14 @@ var _valifyToken = function(req, res, next){
 
 	redisClient.get(token, function(err, tok){
 		if(err){
-			console.log(err,'fffffffffffff')
 			res.sendStatus(500);
+			res.end();
 			return;
 		}
 		//如果token已经在redis中，则该token已经无效
 		if(tok){
 			res.json({retCode:10006, msg:'凭证无效，请重新登录', data:null});
+			res.end();
 			return;
 		}
 		var _userID = jwt.decode(token, GLOBAL_CONFIG.TOKEN_SECRET).iss;
@@ -69,21 +70,24 @@ var _checkAdminLogin = function(req, res, next){
 //用户访问日志
 var _accessCount = function(req,res,next){
 	var _url = req.path;
-	var _ip = req.ip !== '::1' &&　$$.getClientIp(req).match(/\d+\.\d+\.\d+\.\d+/)[0] || '127.0.0.1';
-	var token = req.body['x-access-token'] || req.query['x-access-token'] || req.headers['x-access-token'] || '';
+	var _ip = req.ip !== '::1' &&　$$.getClientIp(req).match(/\d+\.\d+\.\d+\.\d+/)[0] || '120.77.83.242';
+	var token = req.body['x-access-token'] || req.query['x-access-token'] || req.headers['x-access-token'];
 
 	//是否是管理员
 	var _isAdmin = function(){
 		var defer = Q.defer();
-		if(!token || token === 'null' || token === 'undefined') {
+		if(!token) {
 			defer.resolve();
 			return defer.promise;
 		};
+
 		var _userID = jwt.decode(token, GLOBAL_CONFIG.TOKEN_SECRET).iss;
+
 		AdminModel.findById({_id:_userID}, function(ferr, fdoc){
 			if(ferr){
-				return next();
+				return next(500);
 			}
+
 			if(!fdoc){
 				return defer.resolve();
 			}
@@ -95,7 +99,6 @@ var _accessCount = function(req,res,next){
 	//获取地址
 	var _getAddress = function(){
 		var defer = Q.defer();
-
 		$$.getIpInfo(_ip, function(err, res){
 			if(err){
 				console.log(err,'获取城市出错')
@@ -116,7 +119,6 @@ var _accessCount = function(req,res,next){
 				obj.apiName = _url;
 				obj.address = {};
 				obj.address.country = res.country;
-				obj.address.province = res.province;
 				obj.address.city = res.city;
 				obj.address.district = res.district;
 				defer.resolve(obj);

@@ -3,6 +3,7 @@ var _ = require('lodash');
 var mongoose = require('mongoose');
 var http = require('http');
 var util = require('util');
+var R = require('requestify');
 
 /**
  * @function getClientIp获取客户端ip，
@@ -43,25 +44,39 @@ var _getClientIp = function (req) {
 /**
  * 根据 ip 获取获取地址信息
  */
+// var _getIpInfo = function(ip, cb) {
+//     var sina_server = 'http://int.dpool.sina.com.cn/iplookup/iplookup.php?format=json&ip=';
+//     var url = sina_server + ip;
+//     http.get(url, function(res) {
+//         var code = res.statusCode;
+//         if (code == 200) {
+//             res.on('data', function(data) {
+//                 try {
+//                     cb(null, JSON.parse(data));
+//                 } catch (err) {
+//                     cb(err);
+//                 }
+//             });
+//         } else {
+//             cb({ code: code });
+//         }
+//     }).on('error', function(e) { cb(e); });
+// };
 var _getIpInfo = function(ip, cb) {
     var sina_server = 'http://int.dpool.sina.com.cn/iplookup/iplookup.php?format=json&ip=';
     var url = sina_server + ip;
-    http.get(url, function(res) {
-        var code = res.statusCode;
-        if (code == 200) {
-            res.on('data', function(data) {
-                try {
-                    cb(null, JSON.parse(data));
-                } catch (err) {
-                    cb(err);
-                }
-            });
-        } else {
-            cb({ code: code });
-        }
-    }).on('error', function(e) { cb(e); });
+    R.request(url,{
+        method:'get',
+        dataType:'json'
+    }).then(function(res){
+        var data = JSON.parse(res.body);
+        cb && cb(null, data)
+    },function(err){
+        cb && cb(err) 
+    }).catch(function(err){
+        cb && cb(err)
+    });
 };
-
 /**
  * @function generateArray 生成全数组形式的数据
  * @arrObj {Array} 列表对象 [{name:'haha', age:12},{name:'hehe', age:13}]
