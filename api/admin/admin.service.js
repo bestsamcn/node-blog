@@ -112,7 +112,7 @@ var _login = function(req, res){
 				return;
 			}
 			if(!fdoc){
-				res.json({retCode:10003, msg:'用户名不存在', data:null});
+				res.json({retCode:10023, msg:'用户名不存在', data:null});
 				res.end();
 				return;
 			}
