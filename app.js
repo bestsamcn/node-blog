@@ -24,6 +24,7 @@ var app = express();
 app.use(logger('dev'));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({
+    limit:globalConfig.POST_LIMIT,
 	extended: true
 }));
 app.use(cookieParser());
