@@ -20,6 +20,7 @@
     "cors": "^2.8.3",
     "crypto": "0.0.3",
     "express-art-template": "0.0.2",
+    "gm": "^1.23.0",
     "gulp": "^3.9.1",
     "gulp-nodemon": "^2.2.1",
     "jwt-simple": "^0.5.1",

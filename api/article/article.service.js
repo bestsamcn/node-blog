@@ -8,6 +8,7 @@ var Q = require('q');
 var xss = require('xss');
 var formidable = require('formidable');
 var fs = require('fs');
+var gm = require('gm')
 
 
 
@@ -564,10 +565,15 @@ var _addPoster = function(req, res){
         var crypto = require('crypto');
         var md5 = crypto.createHash('md5');
         var _posterName = md5.update('blog'+Date.now()).digest('hex')+'.'+suffix;
+
         fs.renameSync(files.poster.path,form.uploadDir+_posterName);
-        global.avatarName = _posterName;
-        res.json({retCode:0,msg:'上传成功',data:{posterName:_posterName}});
-        res.end();
+        global._posterName = _posterName;
+        gm(posterDir+global['_posterName']).minify().autoOrient().write(form.uploadDir+_posterName, function(err, pic){
+            if(err){
+                return res.sendStatus(500);
+            }
+            res.json({retCode:0,msg:'上传成功',data:{posterName:_posterName}});
+        });
     });
 }
 
