@@ -172,7 +172,7 @@ var _logout = function(req, res){
  * 获取访问记录
  * @param {number} pageIndex 起始页
  * @param {number} pageSize 页体积
- * @param {number} type 1是查询全部， 2是查询昨天
+ * @param {number} type 1是查询全部， 2是查询昨天, 3是今天的
  * @param {string} ip 根据ip查询
  * @param {string} keyword 根据关键字查询
  */
@@ -221,11 +221,17 @@ var _getAccessList = function(req, res){
     var oneDayTime = 1000 * 60 * 60 * 24;
     //昨天的整天的时间戳范围是(todayTime-oneDayTime)<= yestodayTime < todayTime
     var yestodayTime = todayTime - oneDayTime;
-
+    var todayTimeRange = todayTime + oneDayTime;
     if(!!_type && _type == 2){
     	filterObj.createTime = {
     		$gt: yestodayTime,
     		$lte: todayTime
+    	}
+    }
+    if(!!_type && _type == 3){
+    	filterObj.createTime = {
+    		$gt: todayTime,
+    		$lte: todayTimeRange
     	}
     }
 
