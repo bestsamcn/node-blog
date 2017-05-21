@@ -380,7 +380,7 @@ var _getList = function(req, res){
     //返回
     var _return = function(obj){
         !!obj._articleList && (filterObj._id = {}) && (filterObj._id.$in=obj._articleList);
-        ArticleModel.find(filterObj, optObj).skip(_pageIndex * _pageSize).limit(_pageSize).populate(['tag', 'category']).sort(sortObj).exec(function(err, flist){
+        ArticleModel.find(filterObj).skip(_pageIndex * _pageSize).limit(_pageSize).select('-codeContent -content -pinYin').populate(['tag', 'category']).sort(sortObj).exec(function(err, flist){
             if(err){
                 return res.sendStatus(500);
             }
@@ -397,13 +397,15 @@ var _getList = function(req, res){
 /**
  * getDetail 获取详情
  * @param {string} id 文章id
+ * @param {number} type 1获取的是html，2获取的是源码
  */
 var _getDetail = function(req, res){
     var _articleID = req.query.id;
+    var _type = req.query.type;
     if(!_articleID || !tools.isObjectID(_articleID)){
         return res.json({retCode:10012, msg:'id无效', data:null});
     }
-
+    var _exclude = _type == 1 ? '-codeContent' : '-content';
 
     //首先查询当前id的记录是否存在
     var _isExistRecord = function(){
@@ -425,10 +427,9 @@ var _getDetail = function(req, res){
     //首先查询当前id的记录
     var _findCurrRecord = function(){
         var defer = Q.defer();
-        ArticleModel.findByIdAndUpdate(_articleID, {$inc:{'readNum':1}}).populate(['category', 'tag']).exec( function(ferr, fdoc){
+        ArticleModel.findByIdAndUpdate(_articleID, {$inc:{'readNum':1}}).select(_exclude).populate(['category', 'tag']).exec( function(ferr, fdoc){
             if(ferr){
                 res.sendStatus(500);
-                res.end();
                 return;
             }
             defer.resolve(fdoc);
@@ -439,10 +440,9 @@ var _getDetail = function(req, res){
     //查询上一条记录
     var _findPrevRecord = function(){
         var defer = Q.defer();
-        ArticleModel.find({_id:{$lt:_articleID}}).limit(1).sort({_id:-1}).exec(function(ferr, fdoc){
+        ArticleModel.find({_id:{$lt:_articleID}}, '-codeContent -content -previewText -pinYin').limit(1).sort({_id:-1}).exec(function(ferr, fdoc){
             if(ferr){
                 res.sendStatus(500);
-                res.end();
                 return;
             }
             defer.resolve(fdoc);
@@ -453,10 +453,9 @@ var _getDetail = function(req, res){
     //查询下一条记录
     var _findNextRecord = function(){
         var defer = Q.defer();
-        ArticleModel.find({_id:{$gt:_articleID}}).limit(1).sort({_id:-1}).exec(function(ferr, fdoc){
+        ArticleModel.find({_id:{$gt:_articleID}}, '-codeContent -content -previewText -pinYin').limit(1).sort({_id:-1}).exec(function(ferr, fdoc){
             if(ferr){
                 res.sendStatus(500);
-                res.end();
                 return;
             }
             defer.resolve(fdoc);
@@ -568,7 +567,7 @@ var _addPoster = function(req, res){
 
         fs.renameSync(files.poster.path,form.uploadDir+_posterName);
         global._posterName = _posterName;
-        gm(posterDir+global['_posterName']).minify().autoOrient().write(form.uploadDir+_posterName, function(err, pic){
+        gm(posterDir+global['_posterName']).quality(70).autoOrient().write(form.uploadDir+_posterName, function(err, pic){
             if(err){
                 return res.sendStatus(500);
             }
