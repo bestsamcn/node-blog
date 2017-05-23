@@ -6,9 +6,10 @@ var CountSchema = new mongoose.Schema({
         require:true
     },
     createTime:{
-        type:Number,
+        type:Date,
         require:true,
-        default:Date.now()
+        default:Date.now(),
+        expires: 60*60*24*7
     },
     apiName:{
         type:String,
@@ -37,6 +38,5 @@ var CountSchema = new mongoose.Schema({
             default:''
         }
     }
-
 });
 exports = module.exports = CountSchema;

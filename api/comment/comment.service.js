@@ -140,6 +140,8 @@ var _delete = function(req, res){
  * @param {number} pageIndex 分页索引
  * @param {number} pageSize 分页体积
  * @param {string} id 文章id
+ * @param {string} keyword 关键字
+ * @param {string} type 请求类型，0 || null 是全部，1是今天
  * @return {data,total} 返回 
  */
 var _getList = function(req, res){
@@ -147,6 +149,19 @@ var _getList = function(req, res){
     var _pageSize = parseInt(req.query.pageSize) || 10;
     var _articleID = req.query.id;
     var _keyword = req.query.keyword;
+    var _type = req.query.type;
+
+    //获取今天凌晨时间戳
+    var nowDate = new Date();
+    nowDate.setHours(0)
+    nowDate.setMinutes(0)
+    nowDate.setSeconds(0)
+    nowDate.setMilliseconds(0)
+    var todayTime = nowDate.getTime();
+
+    //一天的时间戳长度
+    var oneDayTime = 1000 * 60 * 60 * 24;
+
     if(!!_articleID && !$$.isObjectID(_articleID)){
         return res.json({retCode:10012, msg:'id无效', data:null});
     }
@@ -167,6 +182,9 @@ var _getList = function(req, res){
                 }
             }        
         ]
+    }
+    if(!!_type && _type == 1){
+        filterObj['createLog.createTime'] = {$gt: todayTime, $lte: Date.now()};
     }
     //计算记录总数
     var _getTotal = function() {

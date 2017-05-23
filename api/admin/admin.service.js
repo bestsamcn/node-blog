@@ -8,6 +8,7 @@ var jwt = require('jwt-simple');
 var GLOBAL_CONFIG = require('../../config');
 var interceptor = require('../../interceptor');
 var CountModel = require('../../model').CountModel;
+var CommentModel = require('../../model').CommentModel;
 var MessageModel = require('../../model').MessageModel;
 
 /**
@@ -298,45 +299,45 @@ var _delAccess = function(req, res) {
  * 获取各种需要总数
  */
 var _getPreviewTotal = function(req, res){
+	//获取今天凌晨时间戳
+	var nowDate = new Date();
+    nowDate.setHours(0)
+    nowDate.setMinutes(0)
+    nowDate.setSeconds(0)
+    nowDate.setMilliseconds(0)
+    var todayTime = nowDate.getTime();
 
-	//访问总数
+    //一天的时间戳长度
+    var oneDayTime = 1000 * 60 * 60 * 24;
+
+	//今天评论总数
 	var _getAccessTotal = function(){
 		var defer = Q.defer();
-		CountModel.count(function(err, total){
+		CommentModel.count({'createLog.createTime':{$gt: todayTime, $lte: Date.now()}}, function(err, total){
 			if(err){
 				res.sendStatus(500);
 				return;
 			}
 			var obj = {
-				accessTotal:total
+				todayComment:total
 			}
 			defer.resolve(obj);
 		});
 		return defer.promise;
 	}
 
-	//昨天访问总数
+	//今天访问总数
 	var _getYestodayTotal = function(obj){
 		var defer = Q.defer();
-		//获取今天凌晨时间戳
-	    var nowDate = new Date();
-	    nowDate.setHours(0)
-	    nowDate.setMinutes(0)
-	    nowDate.setSeconds(0)
-	    nowDate.setMilliseconds(0)
-	    var todayTime = nowDate.getTime();
-
-	    //一天的时间戳长度
-	    var oneDayTime = 1000 * 60 * 60 * 24;
+		
 	    //昨天的整天的时间戳范围是(todayTime-oneDayTime)<= yestodayTime < todayTime
-	    var yestodayTime = todayTime - oneDayTime;
-	    CountModel.count({createTime:{$gt: yestodayTime, $lte: todayTime}}, function(err, total){
+	    CountModel.count({createTime:{$gt: todayTime, $lte: Date.now()}}, function(err, total){
 			if(err){
 				res.sendStatus(500);
 				return;
 			}
 			
-			obj.accessYestodayTotal = total
+			obj.accessTodayTotal = total
 			defer.resolve(obj);
 		});
 		return defer.promise;

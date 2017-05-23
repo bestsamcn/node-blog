@@ -330,7 +330,6 @@ var _getList = function(req, res){
         filterObj['tag']= _tag;
     }
     if(!!_cate){
-        filterObj.category = {};
         filterObj['category'] = _cate;
     }
     if(!!_type){
@@ -519,7 +518,6 @@ var _like = function(req, res){
  * 上传图片
  */
 var _addPoster = function(req, res){
-    console.log('ffffffffffffffff')
     var posterDir = 'public/img/';
     if (!fs.existsSync(posterDir)) {
         fs.mkdirSync(posterDir);

@@ -14,7 +14,7 @@ var _add = function(req, res){
  	var _name = req.body.name;
  	_name = _.trim(_name);
  	if(!_name){
- 		res.json({retCode:10007, msg:'标签名不能为空', data:null});
+ 		res.json({retCode:10007, msg:'名称不能为空', data:null});
  		return;
  	}
  	//检测重复
@@ -26,7 +26,7 @@ var _add = function(req, res){
  				return;
  			}
  			if(doc){
- 				res.json({retCode:10013, msg:'标签名重复', data:null});
+ 				res.json({retCode:10013, msg:'名称重复', data:null});
  				return;
  			}
  			defer.resolve();
@@ -72,7 +72,7 @@ var _delete = function(req, res){
  				return;
  			}
  			if(!doc){
- 				res.json({retCode:10011, msg:'该标签不存在', data:null});
+ 				res.json({retCode:10011, msg:'查询无此记录', data:null});
  				return;
  			}
  			defer.resolve();
@@ -114,7 +114,7 @@ var _edit = function(req, res){
  				return;
  			}
  			if(!doc){
- 				res.json({retCode:10011, msg:'该标签不存在', data:null});
+ 				res.json({retCode:10011, msg:'查询无此记录', data:null});
  				return;
  			}
  			defer.resolve();
@@ -130,7 +130,7 @@ var _edit = function(req, res){
  				return;
  			}
  			if(doc){
- 				res.json({retCode:10013, msg:'标签名重复', data:null});
+ 				res.json({retCode:10013, msg:'名称重复', data:null});
  				return;
  			}
  			defer.resolve();
