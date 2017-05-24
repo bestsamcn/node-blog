@@ -9,7 +9,9 @@ var CountSchema = new mongoose.Schema({
         type:Date,
         require:true,
         default:Date.now(),
-        expires: 60*60*24*7
+        index:{
+            expires:'7d'
+        }
     },
     apiName:{
         type:String,
