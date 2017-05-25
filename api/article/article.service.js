@@ -50,8 +50,8 @@ var _add = function(req, res){
         res.json({retCode:10016, msg:'请填写内容', data:null});
         return;
     }
-    var _tagArr = _tag.split(',');
-    var _categoryArr = _cate.split(',');
+    // var _tagArr = _tag.split(',');
+    // var _categoryArr = _cate.split(',');
     // _title = xss(_title);
     // _content = xss(_content);
     // _previewText = xss(_previewText);
@@ -62,16 +62,49 @@ var _add = function(req, res){
     var _pinyin = [];
     _pinyin = _pinyin.concat(_allPinyin, _sglPinyin);
 
+    //标签是否存在
+    var _isExistTag = function(){
+        var defer = Q.defer();
+        TagModel.findById(_tag, function(err, doc){
+            if(err){
+                return res.sendStatus(500);
+            }
+            if(!doc){
+                return res.json({retCode:10021, msg:'查询无该记录', data:null});
+            }
+            var obj = {};
+            obj.tagName = doc.name;
+            defer.resolve(obj);
+        });
+        return defer.promise;
+    }
 
+    //分类是否存在
+    var _isExistCate = function(obj){
+        var defer = Q.defer();
+        CategoryModel.findById(_cate, function(err, doc){
+            if(err){
+                return res.sendStatus(500);
+            }
+            if(!doc){
+                return res.json({retCode:10021, msg:'查询无该记录', data:null});
+            }
+            obj.categoryName = doc.name;
+            defer.resolve(obj);
+        });
+        return defer.promise;
+    }
 
     //实体
-    var _create = function(){
+    var _create = function(obj){
         var defer = Q.defer();
        var entity = {
             title:_title,
+            tagName:obj.tagName,
+            categoryName:obj.categoryName,
             previewText:_previewText,
-            tag:_tagArr,
-            category:_categoryArr,
+            tag:_tag,
+            category:_cate,
             content:_content,
             codeContent:_codeContent,
             pinYin:_pinyin,
@@ -115,7 +148,7 @@ var _add = function(req, res){
         });
            
     }
-    _create().then(_setTag).then(_setCate)
+    _isExistTag().then(_isExistTag).then(_create).then(_setTag).then(_setCate)
 }
 
 /**
@@ -253,8 +286,41 @@ var _edit = function(req, res){
         return defer.promise;
     }
 
+    //标签是否存在
+    var _isExistTag = function(){
+        var defer = Q.defer();
+        TagModel.findById(_tag, function(err, doc){
+            if(err){
+                return res.sendStatus(500);
+            }
+            if(!doc){
+                return res.json({retCode:10021, msg:'查询无该记录', data:null});
+            }
+            var obj = {};
+            obj.tagName = doc.name;
+            defer.resolve(obj);
+        });
+        return defer.promise;
+    }
+
+    //分类是否存在
+    var _isExistCate = function(obj){
+        var defer = Q.defer();
+        CategoryModel.findById(_cate, function(err, doc){
+            if(err){
+                return res.sendStatus(500);
+            }
+            if(!doc){
+                return res.json({retCode:10021, msg:'查询无该记录', data:null});
+            }
+            obj.categoryName = doc.name;
+            defer.resolve(obj);
+        });
+        return defer.promise;
+    }
+
     //编辑
-    var __edit = function(){
+    var __edit = function(obj){
         var _allPinyin = tools.getPinyin(_title, true);
         var _sglPinyin = tools.getPinyin(_title, false);
         var _pinyin = [];
@@ -262,6 +328,8 @@ var _edit = function(req, res){
         //实体
         var entity = {
             title:_title,
+            tagName:obj.tagName,
+            categoryName:obj.categoryName,
             previewText:_previewText,
             tag:_tag.split(','),
             category:_cate.split(','),
@@ -278,7 +346,7 @@ var _edit = function(req, res){
             res.json({retCode:0, msg:'更新成功', data:null})
         });
     }
-    _isExist().then(__edit);
+    _isExist().then(_isExistTag).then(_isExistCate).then(__edit);
 }
 
 /**
@@ -301,7 +369,6 @@ var _getList = function(req, res){
     var sortObj = {};
     if(!!_keyword){
         _keyword = decodeURI(_keyword);
-        console.log(_keyword)
         var reg = new RegExp(_keyword, 'gim');
         filterObj.$or = [
             {
@@ -315,6 +382,21 @@ var _getList = function(req, res){
                 }
             },
             {
+                'tagName':{
+                    $regex:reg
+                }
+            },
+            {
+                'categoryName':{
+                    $regex:reg
+                }
+            },
+            {
+                'content':{
+                    $regex:reg
+                }
+            },
+            {
                 'pinYin':{
                     $regex:reg
                 }
@@ -322,15 +404,15 @@ var _getList = function(req, res){
         ]
         // filterObj.$text = {};
         // filterObj.$text.$search = _keyword;
-        // optObj.score = {};
-        // optObj.score.$meta = 'textScore';
     }
 
     if(!!_tag){
-        filterObj['tag']= _tag;
+        _tag = decodeURI(_tag);
+        filterObj['tagName']= _tag;
     }
     if(!!_cate){
-        filterObj['category'] = _cate;
+        _cate = decodeURI(_cate);
+        filterObj['categoryName'] = _cate;
     }
     if(!!_type){
         filterObj = {};
@@ -379,7 +461,7 @@ var _getList = function(req, res){
     //返回
     var _return = function(obj){
         !!obj._articleList && (filterObj._id = {}) && (filterObj._id.$in=obj._articleList);
-        ArticleModel.find(filterObj).skip(_pageIndex * _pageSize).limit(_pageSize).select('-codeContent -content -pinYin').populate(['tag', 'category']).sort(sortObj).exec(function(err, flist){
+        ArticleModel.find(filterObj).skip(_pageIndex * _pageSize).limit(_pageSize).select('-codeContent -content -pinYin -tagName -categoryName').populate(['tag', 'category']).sort(sortObj).exec(function(err, flist){
             if(err){
                 return res.sendStatus(500);
             }
@@ -404,7 +486,7 @@ var _getDetail = function(req, res){
     if(!_articleID || !tools.isObjectID(_articleID)){
         return res.json({retCode:10012, msg:'id无效', data:null});
     }
-    var _exclude = _type == 1 ? '-codeContent' : '-content';
+    var _exclude = _type == 1 ? '-codeContent -tagName -categoryName' : '-content  -tagName -categoryName';
 
     //首先查询当前id的记录是否存在
     var _isExistRecord = function(){
@@ -439,7 +521,7 @@ var _getDetail = function(req, res){
     //查询上一条记录
     var _findPrevRecord = function(){
         var defer = Q.defer();
-        ArticleModel.find({_id:{$lt:_articleID}}, '-codeContent -content -previewText -pinYin').limit(1).sort({_id:-1}).exec(function(ferr, fdoc){
+        ArticleModel.find({_id:{$lt:_articleID}}, '-codeContent -content -previewText -pinYin -tagName -categoryName').limit(1).sort({_id:-1}).exec(function(ferr, fdoc){
             if(ferr){
                 res.sendStatus(500);
                 return;
@@ -452,7 +534,7 @@ var _getDetail = function(req, res){
     //查询下一条记录
     var _findNextRecord = function(){
         var defer = Q.defer();
-        ArticleModel.find({_id:{$gt:_articleID}}, '-codeContent -content -previewText -pinYin').limit(1).sort({_id:-1}).exec(function(ferr, fdoc){
+        ArticleModel.find({_id:{$gt:_articleID}}, '-codeContent -content -previewText -pinYin -tagName -categoryName').limit(1).sort({_id:-1}).exec(function(ferr, fdoc){
             if(ferr){
                 res.sendStatus(500);
                 return;

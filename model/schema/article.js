@@ -20,6 +20,16 @@ var ArticleSchema = new mongoose.Schema({
 		require:true,
 		ref:'Category'
 	},
+	tagName:{
+		type:String,
+		require:true,
+		default:''
+	},
+	categoryName:{
+		type:String,
+		require:true,
+		default:''
+	},
 	tag:{
 		type:mongoose.Schema.ObjectId,
 		require:true,
