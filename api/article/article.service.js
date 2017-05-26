@@ -2,6 +2,7 @@ var ArticleModel = require('../../model').ArticleModel;
 var TagModel = require('../../model').TagModel;
 var CategoryModel = require('../../model').CategoryModel;
 var CommentModel = require('../../model').CommentModel;
+var HotModel = require('../../model').HotModel;
 var tools = require('../../tools');
 var _ = require('lodash');
 var Q = require('q');
@@ -9,6 +10,7 @@ var xss = require('xss');
 var formidable = require('formidable');
 var fs = require('fs');
 var gm = require('gm')
+var GLOBAL_CONFIG = require('../../config');
 
 
 
@@ -367,8 +369,10 @@ var _getList = function(req, res){
     var filterObj = {};
     var optObj = {};
     var sortObj = {};
+
     if(!!_keyword){
         _keyword = decodeURI(_keyword);
+
         var reg = new RegExp(_keyword, 'gim');
         filterObj.$or = [
             {
@@ -402,8 +406,6 @@ var _getList = function(req, res){
                 }
             }
         ]
-        // filterObj.$text = {};
-        // filterObj.$text.$search = _keyword;
     }
 
     if(!!_tag){
@@ -417,8 +419,10 @@ var _getList = function(req, res){
     if(!!_type){
         filterObj = {};
         (_type == 2) && (sortObj.readNum = -1);
+        sortObj.lastEditTime = -1;
         sortObj._id = -1;
     }else{
+        sortObj.lastEditTime = -1;
         sortObj._id = -1;
     }
 
@@ -438,7 +442,43 @@ var _getList = function(req, res){
         });
         return defer.promise;
     }
-
+    //热词计算
+    var _setHotWord = function(obj){
+        var defer = Q.defer();
+        if(!_keyword || _keyword == 'undefined' || _keyword == 'null' || obj._total == 0){
+            defer.resolve(obj);
+            return defer.promise;
+        }
+        HotModel.find({name:{$regex:reg}}, function(err, list){
+            //如果hot中没有该热词，就添加该热词，如果hotList.length > GLOBAL_CONFIG.HOT_WORD.LENGTH 就删除热度最低的热词；
+            //i am the callback hell
+            if(list.length === 0){
+                HotModel.create({name:_keyword, hotCount:1, createTime:Date.now()}, function(err, doc){
+                    if(err) return res.sendStatus(500);
+                    HotModel.find({}).sort({hotCount:1, createTime:1}).exec(function(err, hlist){
+                        if(err) return res.sendStatus(500);
+                        if(hlist.length <= GLOBAL_CONFIG.HOT_WORD_LENGTH) return defer.resolve(obj);
+                        HotModel.remove({_id:hlist[0]._id}, function(err, ret){
+                            if(err) return res.sendStatus(500);
+                            defer.resolve(obj);
+                        });
+                    });
+                });
+            //否则就让该热词的热度+1
+            }else{
+                var temp  = [];
+                for(var i =0; i< list.length; i++){
+                    temp.push(list[i]._id);
+                }
+                HotModel.update({_id:{$in:temp}}, {$inc:{hotCount:1}}, function(err, ret){
+                    if(err) return res.sendStatus(500);
+                    defer.resolve(obj);
+                });
+            }
+        });
+        return defer.promise;
+    }
+    
 
     //查询评论最多的文章
     var _getComment = function(obj){
@@ -469,7 +509,7 @@ var _getList = function(req, res){
         });
     }
 
-    !_type && _getTotal().then(_return);
+    !_type && _getTotal().then(_setHotWord).then(_return);
     !!_type && _getTotal().then(_getComment).then(_return);
 }
 

@@ -11,7 +11,7 @@ var HotSchema = new mongoose.Schema({
         require:true,
         default:Date.now()
     },
-    num:{
+    hotCount:{
         type:Number,
         require:true,
         default:0

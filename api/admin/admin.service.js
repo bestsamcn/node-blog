@@ -181,7 +181,6 @@ var _getAccessList = function(req, res){
 	var _pageIndex = parseInt(req.query.pageIndex) -1 || 0;
     var _pageSize = parseInt(req.query.pageSize) || 10;
     var _keyword = req.query.keyword;
-    var _ip = req.query.ip;
     var _type= req.query.type;
     var filterObj = {};
     if(!!_keyword){
@@ -203,11 +202,13 @@ var _getAccessList = function(req, res){
                 'city':{
                     $regex:reg
                 }
+            },
+            {
+                'accessip':{
+                    $regex:reg
+                }
             }
     	]
-    }
-    if(!!_ip){
-    	filterObj.accessip = _ip;
     }
 
     //获取今天凌晨时间戳
