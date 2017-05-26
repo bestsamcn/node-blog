@@ -10,7 +10,7 @@ var NODE_ENV = process.env.BLOG_ENV || 'development',
 	MONGO_PASSWORD = process.env.BLOG_MONGO_PASSWORD || '';
 	MONGO_PORT = process.env.BLOG_MONGO_PORT || 27017;
 	POST_LIMIT = process.env.BLOG_MONGO_PORT || '10mb';
-	HOT_WORD_LENGTH = 5;
+	HOT_WORD_LENGTH = 10;
 var _config = {
 	host:NODE_HOST,
 	port:NODE_PORT,

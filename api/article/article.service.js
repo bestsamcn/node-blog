@@ -422,8 +422,8 @@ var _getList = function(req, res){
         sortObj.lastEditTime = -1;
         sortObj._id = -1;
     }else{
-        sortObj.lastEditTime = -1;
         sortObj._id = -1;
+        sortObj.lastEditTime = -1;
     }
 
 
