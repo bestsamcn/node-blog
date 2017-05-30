@@ -72,7 +72,7 @@ var _add = function(req, res){
                 return res.sendStatus(500);
             }
             if(!doc){
-                return res.json({retCode:10021, msg:'查询无该记录', data:null});
+                return res.json({retCode:10021, msg:'查询无该标签记录', data:null});
             }
             var obj = {};
             obj.tagName = doc.name;
@@ -89,7 +89,7 @@ var _add = function(req, res){
                 return res.sendStatus(500);
             }
             if(!doc){
-                return res.json({retCode:10021, msg:'查询无该记录', data:null});
+                return res.json({retCode:10021, msg:'查询无该分类记录', data:null});
             }
             obj.categoryName = doc.name;
             defer.resolve(obj);
@@ -99,7 +99,6 @@ var _add = function(req, res){
 
     //实体
     var _create = function(obj){
-        var defer = Q.defer();
        var entity = {
             title:_title,
             tagName:obj.tagName,
@@ -118,39 +117,10 @@ var _add = function(req, res){
                 res.sendStatus(500);
                 return;
             }
-            defer.resolve(doc);
-            
-        }); 
-        return defer.promise;
-    }
-
-    //添加标签文章总数
-    var _setTag = function(doc){
-        var defer = Q.defer();
-        TagModel.update({_id:_tag}, {$inc:{'totalArticle':1}}, function(err, ret){
-            console.log(ret)
-            if(err || !ret.ok){
-                res.sendStatus(500);
-                return;
-            }
-            defer.resolve(doc);
-        });
-        return defer.promise;
-    }
-
-    //添加分类文章总数
-    var _setCate = function(doc){
-        CategoryModel.update({_id:_cate}, {$inc:{'totalArticle':1}}, function(err, ret){
-            console.log(ret)
-            if(err || !ret.ok){
-                res.sendStatus(500);
-                return;
-            }
             res.json({retCode:0, msg:'发布成功', data:doc}); 
-        });
-           
+        }); 
     }
-    _isExistTag().then(_isExistTag).then(_create).then(_setTag).then(_setCate)
+    _isExistTag().then(_isExistTag).then(_create);
 }
 
 /**
@@ -190,31 +160,6 @@ var _delete = function(req, res){
         });
         return defer.promise;
     }
-
-    //tag文章数减1
-    var _detag = function(doc){
-        var defer = Q.defer();
-        TagModel.update({_id:doc.tag}, {$inc:{totalArticle:-1}}, function(err, ret){
-            if(err || ret.ok !==1){
-                return res.sendStatus(500);
-            }
-            defer.resolve(doc);
-        });
-        return defer.promise;
-    }
-
-    //category文章数减1
-    var _decate = function(doc){
-        var defer = Q.defer();
-        CategoryModel.update({_id:doc.category}, {$inc:{totalArticle:-1}}, function(err, ret){
-            if(err || ret.ok !==1){
-                return res.sendStatus(500);
-            }
-            defer.resolve(doc);
-        });
-        return defer.promise;
-    }
-
     //删除
     var __del = function(doc){
         ArticleModel.findByIdAndRemove(_articleID, function(err, doc){
@@ -224,7 +169,7 @@ var _delete = function(req, res){
             res.json({retCode:0, msg:'删除成功', data:null});
         });
     }
-    _isExist().then(_delComment).then(_detag).then(_decate).then(__del);
+    _isExist().then(_delComment).then(__del);
 }
 
 /**
@@ -478,6 +423,34 @@ var _getList = function(req, res){
         });
         return defer.promise;
     }
+
+    //标签热度计算
+    var _setTagClickNumber = function(obj){
+        var defer = Q.defer();
+        if(!filterObj.tagName){
+            defer.resolve(obj);
+            return defer.promise;
+        }
+        TagModel.update({name:filterObj.tagName}, {$inc:{clickNum:1}}, function(err, ret){
+            if(err) return res.sendStatus(500);
+            defer.resolve(obj);
+        });
+        return defer.promise;
+    }
+
+    //分类热度计算
+    var _setCateClickNumber = function(obj){
+        var defer = Q.defer();
+        if(!filterObj.categoryName){
+            defer.resolve(obj);
+            return defer.promise;
+        }
+        CategoryModel.update({name:filterObj.categoryName}, {$inc:{clickNum:1}}, function(err, ret){
+            if(err) return res.sendStatus(500);
+            defer.resolve(obj);
+        });
+        return defer.promise;
+    }
     
 
     //查询评论最多的文章
@@ -509,7 +482,7 @@ var _getList = function(req, res){
         });
     }
 
-    !_type && _getTotal().then(_setHotWord).then(_return);
+    !_type && _getTotal().then(_setHotWord).then(_setTagClickNumber).then(_setCateClickNumber).then(_return);
     !!_type && _getTotal().then(_getComment).then(_return);
 }
 
@@ -696,6 +669,50 @@ var _addPoster = function(req, res){
     });
 }
 
+//统计分类文章数量
+var _getDiffArticle = function(req, res){
+    var _type = req.query.type || 1;
+    //获取类文章分组情况
+    var _getCateGroup = function(){
+        var defer = Q.defer();
+        ArticleModel.aggregate({$group:{_id:'$category', total:{$sum:1}}}).exec(function(err, group){
+            if(err) return res.sendStatus(500);
+            defer.resolve(group);
+        });
+        return defer.promise;
+    }
+
+    //根据_id关联起来，拿到文章详情
+    var _getCatePopulate = function(group){
+        CategoryModel.populate(group, {path: '_id'}, function(err, list) {
+            // Your populated translactions are inside populatedTransactions
+            if(err) return res.sendStatus(500);
+            res.json({retCode:0, msg:'查询成功', data:list});
+        });
+    }
+
+    //获取类文章分组情况
+    var _getTagGroup = function(){
+        var defer = Q.defer();
+        ArticleModel.aggregate({$group:{_id:'$tag', total:{$sum:1}}}).exec(function(err, group){
+            if(err) return res.sendStatus(500);
+            defer.resolve(group);
+        });
+        return defer.promise;
+    }
+
+    //根据_id关联起来，拿到文章详情
+    var _getTagPopulate = function(group){
+        TagModel.populate(group, {path: '_id'}, function(err, list) {
+            // Your populated translactions are inside populatedTransactions
+            if(err) return res.sendStatus(500);
+            res.json({retCode:0, msg:'查询成功', data:list});
+        });
+    }
+    _type == 1 && _getCateGroup().then(_getCatePopulate);
+    _type == 2 && _getTagGroup().then(_getTagPopulate);
+}
+
 exports.add = _add;
 exports.delete = _delete;
 exports.edit = _edit;
@@ -703,3 +720,5 @@ exports.getList = _getList;
 exports.getDetail = _getDetail;
 exports.like = _like;
 exports.addPoster = _addPoster;
+exports.getDiffArticle = _getDiffArticle;
+

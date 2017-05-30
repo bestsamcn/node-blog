@@ -27,6 +27,7 @@ var _valifyToken = function(req, res, next){
 	}
 
 	redisClient.get(token, function(err, tok){
+
 		if(err){
 			res.sendStatus(500);
 			res.end();
@@ -40,6 +41,7 @@ var _valifyToken = function(req, res, next){
 		}
 		var _userID = jwt.decode(token, GLOBAL_CONFIG.TOKEN_SECRET).iss;
 		AdminModel.findById({_id:_userID} ,`-password`, function(ferr, fdoc){
+
 			if(!!err){
 				return next(500);
 			}

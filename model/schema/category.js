@@ -15,11 +15,6 @@ var CategorySchema = new mongoose.Schema({
         type:Number,
         require:true,
         default:0
-    },
-    totalArticle:{
-        type:Number,
-        require:false,
-        default:0
     }
 });
 exports = module.exports = CategorySchema;
