@@ -125,14 +125,25 @@ var _delete = function(req, res){
 
     //删除
     var __del = function(){
+        var defer = Q.defer();
         CommentModel.findByIdAndRemove(_commentID, function(err, doc){
             if(err || !doc){
                 return res.sendStatus(500);
             }
-            res.json({retCode:0, msg:'删除成功', data:null});
+            defer.resolve(doc)
+        });
+        return defer.promise;
+    }
+
+    //减少相应文章的评论数量
+    var _deComment = function(doc){
+        ArticleModel.update({_id:doc.article}, {$inc:{commentNum:-1}}, function(err, ret){
+            if(err) return res.sendStatus(500);
+            res.json({retCode:0, msg:'删除成功', data:doc});
         });
     }
-    _isExist().then(__del);
+
+    _isExist().then(__del).then(_deComment);
 }
 
 /**
