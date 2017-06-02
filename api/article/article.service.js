@@ -364,11 +364,9 @@ var _getList = function(req, res){
     if(!!_type){
         filterObj = {};
         (_type == 2) && (sortObj.readNum = -1);
-        sortObj.lastEditTime = -1;
-        sortObj._id = -1;
+        // (_type == 1) && (sortObj._id = -1);
     }else{
         sortObj._id = -1;
-        sortObj.lastEditTime = -1;
     }
 
 
@@ -453,27 +451,21 @@ var _getList = function(req, res){
     }
     
 
-    //查询评论最多的文章
-    var _getComment = function(obj){
-        obj = obj || {};
+    //查询评论最多的文章id集合
+    var _getComment = function(){
         var defer = Q.defer();
-        CommentModel.aggregate([{$group:{_id:'$article', count:{$sum:1}}}, {$project:{_id:1,count:1}}, {$limit:4}, {$sort:{count:-1}}]).exec(function(err, list){
+        //$limit需要分在排序后面，不然取值逻辑有问题
+        CommentModel.aggregate([{$group:{_id:'$article', count:{$sum:1}}}, {$project:{_id:1,count:1}}, {$sort:{count:-1}}, {$limit:4}]).exec(function(err, list){
             if(err){
                 return res.sendStatus(500);
             }
-            var temp = [];
-            for(var i=0 ;i<list.length; i++){
-                temp.push(list[i]._id);
-            }
-            obj._articleList = temp;
-            defer.resolve(obj);
+            defer.resolve(list);
         });
         return defer.promise;
     }
 
     //返回
     var _return = function(obj){
-        !!obj._articleList && (filterObj._id = {}) && (filterObj._id.$in=obj._articleList);
         ArticleModel.find(filterObj).skip(_pageIndex * _pageSize).limit(_pageSize).select('-codeContent -content -pinYin -tagName -categoryName').populate(['tag', 'category']).sort(sortObj).exec(function(err, flist){
             if(err){
                 return res.sendStatus(500);
@@ -482,8 +474,23 @@ var _getList = function(req, res){
         });
     }
 
+    //返回最火
+    var _returnComment = function(group){
+        ArticleModel.populate(group, {path:'_id'}, function(err, flist){
+            if(err){
+                return res.sendStatus(500);
+            }
+            var list = [];
+            for(var i=0; i<flist.length; i++){
+                list.push(flist[i]._id);
+            }
+            res.json({retCode:0, msg:'查询成功', data:list});
+        });
+    }
+
     !_type && _getTotal().then(_setHotWord).then(_setTagClickNumber).then(_setCateClickNumber).then(_return);
-    !!_type && _getTotal().then(_getComment).then(_return);
+    !!_type && (_type == 2) && _getTotal().then(_return);
+    !!_type && (_type == 1) && _getComment().then(_returnComment);
 }
 
 
