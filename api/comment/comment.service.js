@@ -6,7 +6,7 @@ var Mongoose = require('mongoose');
 var $$ = require('../../tools');
 var xss = require('xss');
 var ObjectId = Mongoose.Types.ObjectId;
-
+var GLOBAL_CONFIG = require('../../config');
 
 /**
  * 添加评论
@@ -58,6 +58,9 @@ var _add = function(req, res){
         return defer.promise;
     }
 
+  
+    
+
     //录入
     var __add = function(){
         var defer = Q.defer();
@@ -67,6 +70,7 @@ var _add = function(req, res){
     		createLog:{
     			createName:_name,
     			createTime:Date.now(),
+                createEmail:_email,
     			createIp:_createIp,
     		},
     		parentComment:_parentComment,
@@ -83,18 +87,58 @@ var _add = function(req, res){
         return defer.promise;
     }
 
+
+
     //重新查找关联数据
     var _return = function(cid){
-        CommentModel.findById(cid).populate('parentComment').exec(function(err, fdoc){
+        var defer = Q.defer();
+        CommentModel.findById(cid).populate(['parentComment', 'article']).exec(function(err, fdoc){
             if(err || !fdoc){
                 res.sendStatus(500);
                 return;
             }
-            res.json({retCode:0, msg:'创建成功', data:fdoc});
-        })
+            defer.resolve(fdoc);
+        });
+        return defer.promise;
     }
 
-    _isExist().then(__add).then(_return);
+    //发送email
+    var __sendEmail = function(obj){
+        if(!obj.parentComment){
+            return res.json({retCode:0, msg:'创建成功', data:obj});
+        }
+        var nodemailer = require('nodemailer');
+
+        var transporter = nodemailer.createTransport({
+            host: 'smtp.qq.com',
+            port: 465,
+            secure: true, 
+            auth: {
+                user: GLOBAL_CONFIG.EMAIL,
+                pass: GLOBAL_CONFIG.EMAIL_AUTH
+            }
+        });
+        var _html = '<h4 style="font-size:20px;"><b style="color:red;">'+obj.parentComment.createLog.createName+'</b>大牛你好,<b style="color:red">'+obj.createLog.createName+'</b>在主题'+obj.article.title+'中回复了你：</h4>'
+        +'<p>'+obj.content+'</p>'
+        +'文章地址：<a href="http://blog.bestsamcn.me/article/detail/'+obj._id+'">'+obj.article.title+'</a>'
+        var mailOptions = {
+            from: GLOBAL_CONFIG.EMAIL,
+            to: obj.parentComment.createLog.createEmail,
+            subject: obj.article.title,
+            // text: obj.content, 
+            html: _html
+        };
+
+        transporter.sendMail(mailOptions, (error, info) => {
+            if (error) {
+                return console.log(error);
+            }
+            console.log('Message %s sent: %s', info.messageId, info.response);
+            res.json({retCode:0, msg:'创建成功', data:obj});
+        });
+    }
+
+    _isExist().then(__add).then(_return).then(__sendEmail);
 }
 
 

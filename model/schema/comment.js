@@ -16,6 +16,11 @@ var CommentSchema = new mongoose.Schema({
 			require:false,
 			default:'游客'
 		},
+		createEmail:{
+			type:String,
+			require:true,
+			default:''
+		},
 		createTime:{
 			type:Number,
 			require:true

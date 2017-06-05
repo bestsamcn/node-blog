@@ -10,6 +10,8 @@ var NODE_ENV = process.env.BLOG_ENV || 'development',
 	MONGO_PASSWORD = process.env.BLOG_MONGO_PASSWORD || '';
 	MONGO_PORT = process.env.BLOG_MONGO_PORT || 27017;
 	POST_LIMIT = process.env.BLOG_MONGO_PORT || '10mb';
+	EMAIL = process.env.BLOG_EMAIL || '';
+	EMAIL_AUTH = process.env.BLOG_EMAIL_AUTH || '';
 	HOT_WORD_LENGTH = 10;
 var _config = {
 	host:NODE_HOST,
@@ -24,6 +26,8 @@ var _config = {
 	TOKEN_SECRET:TOKEN_SECRET,
 	TOKEN_EXPIRES:TOKEN_EXPIRES,
 	POST_LIMIT:POST_LIMIT,
-	HOT_WORD_LENGTH:HOT_WORD_LENGTH
+	HOT_WORD_LENGTH:HOT_WORD_LENGTH,
+	EMAIL:EMAIL,
+	EMAIL_AUTH:EMAIL_AUTH
 }
 exports = module.exports = _config;
