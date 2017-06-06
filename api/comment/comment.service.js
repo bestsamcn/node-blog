@@ -118,23 +118,23 @@ var _add = function(req, res){
                 pass: GLOBAL_CONFIG.EMAIL_AUTH
             }
         });
-        var _html = '<h4 style="font-size:20px;"><b style="color:red;">'+obj.parentComment.createLog.createName+'</b>你好,<b style="color:red">'+obj.createLog.createName+'</b>在主题《'+obj.article.title+'》中回复了你：</h4>'
-        +'<p style="font-size:20px;">'+obj.content+'</p>'
-        +'文章地址：<a href="http://blog.bestsamcn.me/article/detail/'+obj._id+'">'+obj.article.title+'</a>'
-        var mailOptions = {
-            from: GLOBAL_CONFIG.EMAIL,
-            to: obj.parentComment.createLog.createEmail,
-            subject: obj.article.title,
-            // text: obj.content, 
-            html: _html
-        };
-        console.log(obj)
-        transporter.sendMail(mailOptions, (error, info) => {
-            if (error) {
-                return console.log(error);
-            }
-            console.log('Message %s sent: %s', info.messageId, info.response);
-            res.json({retCode:0, msg:'创建成功', data:obj});
+        var app = require('../../app.js');
+        app.render('email', obj, function(rerr, html){
+            if(rerr) return res.sendStatus(500);
+            var mailOptions = {
+                from: GLOBAL_CONFIG.EMAIL,
+                to: obj.parentComment.createLog.createEmail,
+                subject: obj.article.title,
+                // text: obj.content, 
+                html: html
+            };
+            transporter.sendMail(mailOptions, (error, info) => {
+                if (error) {
+                    return console.log(error);
+                }
+                console.log('Message %s sent: %s', info.messageId, info.response);
+                res.json({retCode:0, msg:'创建成功', data:obj});
+            });
         });
     }
 
