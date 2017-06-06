@@ -119,7 +119,9 @@ var _add = function(req, res){
             }
         });
         var app = require('../../app.js');
-        app.render('email', obj, function(rerr, html){
+        //模板无法直接打印ObjectId类型的值
+        var tmpobj = JSON.parse(JSON.stringify(obj))
+        app.render('email', tmpobj, function(rerr, html){
             if(rerr) return res.sendStatus(500);
             var mailOptions = {
                 from: GLOBAL_CONFIG.EMAIL,
@@ -130,7 +132,7 @@ var _add = function(req, res){
             };
             transporter.sendMail(mailOptions, (error, info) => {
                 if (error) {
-                    return console.log(error);
+                    console.log(error);
                 }
                 console.log('Message %s sent: %s', info.messageId, info.response);
                 res.json({retCode:0, msg:'创建成功', data:obj});
