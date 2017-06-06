@@ -270,6 +270,11 @@ a.signup {
 .copy-right p {
     font-size: 0.8em;
 }
+
+}
+.content img{
+    vertical-align: middle !important;
+    width: 24px !important;
 }
 /*--media quiries end here--*/
   </style>
@@ -283,7 +288,7 @@ a.signup {
         <div class="design">
             <img src="http://api.bestsamcn.me/public/img/design.png">
         </div>
-        <p style="text-align: justify;  text-indent: 2em">{{content}}</p>
+        <p class="content" style="text-align: justify;  text-indent: 2em">{{#content}}</p>
         <a href="http://blog.bestsamcn.me/article/detail/{{article._id}}" class="btn">查看该文章</a>
     </div>
     <div class="copy-right">

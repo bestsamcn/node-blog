@@ -19,7 +19,6 @@ app.engine('.html', template.__express);
 app.set('view engine', 'html');
 app.set('views', __dirname + '/views');
 
-
 //其他配置
 app.use(logger('dev'));
 app.use(bodyParser.json());

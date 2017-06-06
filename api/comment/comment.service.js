@@ -134,7 +134,7 @@ var _add = function(req, res){
                 if (error) {
                     console.log(error);
                 }
-                console.log('Message %s sent: %s', info.messageId, info.response);
+                // console.log('Message %s sent: %s', info.messageId, info.response);
                 res.json({retCode:0, msg:'创建成功', data:obj});
             });
         });
