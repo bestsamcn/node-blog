@@ -198,7 +198,7 @@ var _delete = function(req, res){
  * @param {number} pageSize 分页体积
  * @param {string} id 文章id
  * @param {string} keyword 关键字
- * @param {string} type 请求类型，0 || null 是全部，1是全部,2是昨天,3是今天
+ * @param {string} type 请求类型，0 || 1 是全部，1是今天，0是全部
  * @return {data,total} 返回 
  */
 var _getList = function(req, res){
@@ -241,11 +241,11 @@ var _getList = function(req, res){
         ]
     }
     
-    if(!!_type && _type == 2){
-        var yestodayTime = todayTime - oneDayTime;
-        filterObj['createLog.createTime'] = {$gt: yestodayTime, $lte: todayTime};
-    }
-    if(!!_type && _type == 3){
+    // if(!!_type && _type == 2){
+    //      var yestodayTime = todayTime - oneDayTime;
+    //    filterObj['createLog.createTime'] = {$gt: yestodayTime, $lte: todayTime};
+    // }
+    if(!!_type && _type == 1){
         filterObj['createLog.createTime'] = {$gt: todayTime, $lte: Date.now()};
     }
     //计算记录总数
