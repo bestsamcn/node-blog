@@ -6,7 +6,7 @@ var CountSchema = new mongoose.Schema({
         require:true
     },
     createTime:{
-        type:Date,
+        type:Number,
         require:true,
         default:Date.now(),
         index:{
