@@ -129,6 +129,7 @@ var _accessCount = function(req,res,next){
 		return defer.promise;
 	}
 	var _setInfo = function(obj){
+		obj.createTime = Date.now();
 		CountModel.create(obj ,function(err,doc){
 			if(err){
 				return next(err);
