@@ -99,10 +99,9 @@ var _login = function(req, res){
 	}
 	var _account = req.body.account;
 	var _password = req.body.password;
-	var _expires = req.body.expires;
+	var _expires = GLOBAL_CONFIG.TOKEN_EXPIRES;
 	_account = _.trim(_account);
 	_password = _.trim(_password);
-	_expires = _expires*1 || 3;
 	//是否已经存在该用户名
 	var _isExistAccount = function(){
 		var defer = Q.defer();
@@ -151,8 +150,13 @@ var _login = function(req, res){
 		_expires = new Date().getTime() + _expires * oneDay;
 		var _userID = fdoc._id.toString();
 		var _token = jwt.encode({iss:_userID, exp:_expires}, GLOBAL_CONFIG.TOKEN_SECRET);
-		res.json({retCode:0, msg:'登录成功', token:_token, expires:_expires, data:fdoc});
-		res.end();
+		interceptor.addToken(_token).then(function(){
+			res.json({retCode:0, msg:'登录成功', token:_token, expires:_expires, data:fdoc});
+			res.end();
+		}, function(){
+			res.sendStatus(500);
+		});
+		
 	}
 	_isExistAccount().then(_isEqualToPassword).then(_updateAndReturn);
 }
@@ -161,12 +165,25 @@ var _login = function(req, res){
  * 退出登录
  */
 var _logout = function(req, res){
-	var token = req.token;
-	interceptor.expireToken(token);
-	req.token = null;
-	req.user = null;
-	req.isLogin = null;
-	res.json({retCode:0, msg:'退出成功', data:null});
+	var token = req.body['x-access-token'] || req.query['x-access-token'] || req.headers['x-access-token'];
+	if(!token){
+		req.token = null;
+		req.user = null;
+		req.isLogin = null;
+		res.json({retCode:10006, msg:'凭证无效，请重新登录', data:null});
+		return;
+	}
+	interceptor.delToken(token).then(function(){
+		req.token = null;
+		req.user = null;
+		req.isLogin = null;
+		res.json({retCode:0, msg:'退出成功', data:null});
+		res.end();
+	}, function(){
+		res.sendStatus(500);
+		res.end();
+	});
+	
 }
 
 /**

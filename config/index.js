@@ -2,7 +2,7 @@ var NODE_ENV = process.env.BLOG_ENV || 'development',
 	NODE_HOST = process.env.BLOG_HOST || '127.0.0.1',
 	NODE_PORT = process.env.BLOG_PORT || 3040,
 	TOKEN_SECRET = process.env.BLOG_SECRET || 'node-blog',
-	TOKEN_EXPIRES = process.env.TOKEN_EXPIRES || 7;
+	TOKEN_EXPIRES = process.env.TOKEN_EXPIRES || 1;
 	NODE_REDIS_PORT = process.env.NODE_REDIS_PORT || 6379,
 	TEMPLATE_CACHE = ( NODE_ENV !== 'development' ),
 	MONGO_DATABASE = process.env.BLOG_MONGO_DATABASE || 'blog',
