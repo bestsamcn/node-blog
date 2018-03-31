@@ -110,6 +110,7 @@ var _add = function(req, res){
             codeContent:_codeContent,
             pinYin:_pinyin,
             createTime:Date.now(),
+            lastEditTime:Date.now(),
             poster:_poster
         }
         ArticleModel.create(entity, function(err, doc){
