@@ -301,7 +301,7 @@ var _edit = function(req, res){
  * @param {number} pageIndex 分页索引
  * @param {number} pageSize 分页体积
  * @param {string} keyword 关键字
- * @param {number} type 查询的类型，1是评论最多，2是浏览量最多
+ * @param {number} type 查询的类型，1是评论最多，2是浏览量最多, 3为按修改时间倒序
  * @return {data,total} 返回 
  */
 var _getList = function(req, res){
@@ -364,6 +364,7 @@ var _getList = function(req, res){
     if(!!_type){
         filterObj = {};
         (_type == 2) && (sortObj.readNum = -1);
+        (_type == 3) && (sortObj.lastEditTime = -1);
         // (_type == 1) && (sortObj._id = -1);
     }else{
         sortObj._id = -1;
@@ -490,6 +491,7 @@ var _getList = function(req, res){
 
     !_type && _getTotal().then(_setHotWord).then(_setTagClickNumber).then(_setCateClickNumber).then(_return);
     !!_type && (_type == 2) && _getTotal().then(_return);
+    !!_type && (_type == 3) && _getTotal().then(_return);
     !!_type && (_type == 1) && _getComment().then(_returnComment);
 }
 
