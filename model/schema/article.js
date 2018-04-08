@@ -74,6 +74,11 @@ var ArticleSchema = new mongoose.Schema({
 		type:String,
 		require:true
 	},
+	private:{
+		type:Number,
+		require:true,
+		default:0
+	},
 	pinYin:[
 		{
 			type:String,

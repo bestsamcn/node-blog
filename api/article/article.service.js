@@ -22,6 +22,7 @@ var GLOBAL_CONFIG = require('../../config');
  * @param {string} codeContent 文章的文本格式源码 
  * @param {string} title 标题 
  * @param {string} previewText 导读 
+ * @param {number} private 是否显示，管理员直接忽略 
  */
 var _add = function(req, res){
     var _tag = req.body.tag;
@@ -31,6 +32,7 @@ var _add = function(req, res){
     var _title = req.body.title;
     var _previewText = req.body.previewText;
     var _poster = req.body.poster || '';
+    var _private = req.body.private || 0;
     
     if(!_tag || !tools.isObjectID(_tag)){
         return res.json({retCode:10014, msg:'请选择标签', data:null});
@@ -111,7 +113,8 @@ var _add = function(req, res){
             pinYin:_pinyin,
             createTime:Date.now(),
             lastEditTime:Date.now(),
-            poster:_poster
+            poster:_poster,
+            private:_private,
         }
         ArticleModel.create(entity, function(err, doc){
             if(err || !doc){
@@ -181,6 +184,7 @@ var _delete = function(req, res){
  * @param {string} title 标题
  * @param {string} previewText 分类列表
  * @param {string} content 文章内容html 
+ * @param {number} private 是否显示，管理员直接忽略 
  */
 var _edit = function(req, res){
     var _articleID = req.body.id;
@@ -195,6 +199,8 @@ var _edit = function(req, res){
     var _content = req.body.content;
     var _codeContent = req.body.codeContent;
     var _poster = req.body.poster;
+    var _private = req.body.private || 0;
+
     if(!_tag || !tools.isObjectID(_tag)){
         return res.json({retCode:10014, msg:'请选择标签', data:null});
     }
@@ -285,7 +291,8 @@ var _edit = function(req, res){
             codeContent:_codeContent,
             pinYin:_pinyin,
             poster:_poster,
-            lastEditTime:Date.now()
+            lastEditTime:Date.now(),
+            private:_private,
         }
         ArticleModel.findByIdAndUpdate(_articleID, {$set:entity}, function(err, ret){
             if(err){
@@ -313,9 +320,11 @@ var _getList = function(req, res){
     var _cate = req.query.category;
     var _type = req.query.type;
     var filterObj = {};
-    var optObj = {};
+    var optObj = {}; 
     var sortObj = {};
-
+    
+    var isAdmin = !!req.isLogin && !!req.user && req.user.userType == 2;
+    !isAdmin && (filterObj.private = 0);
     if(!!_keyword){
         _keyword = decodeURI(_keyword);
 
@@ -387,6 +396,7 @@ var _getList = function(req, res){
         });
         return defer.promise;
     }
+
     //热词计算
     var _setHotWord = function(obj){
         var defer = Q.defer();
@@ -457,7 +467,7 @@ var _getList = function(req, res){
     var _getComment = function(){
         var defer = Q.defer();
         //$limit需要分在排序后面，不然取值逻辑有问题
-        CommentModel.aggregate([{$group:{_id:'$article', count:{$sum:1}}}, {$project:{_id:1,count:1}}, {$sort:{count:-1}}, {$limit:4}]).exec(function(err, list){
+        CommentModel.aggregate([{$group:{_id:'$article', count:{$sum:1}}}, {$project:{_id:1, count:1}}, {$sort:{count:-1}}, {$limit:4}]).exec(function(err, list){
             if(err){
                 return res.sendStatus(500);
             }
@@ -468,7 +478,7 @@ var _getList = function(req, res){
 
     //返回
     var _return = function(obj){
-        ArticleModel.find(filterObj).skip(_pageIndex * _pageSize).limit(_pageSize).select('-codeContent -content -pinYin -tagName -categoryName').populate(['tag', 'category']).sort(sortObj).exec(function(err, flist){
+        ArticleModel.find(filterObj).skip(_pageIndex * _pageSize).limit(_pageSize).select('-codeContent -content -pinYin -tagName -categoryName -private').populate(['tag', 'category']).sort(sortObj).exec(function(err, flist){
             if(err){
                 return res.sendStatus(500);
             }
@@ -484,8 +494,15 @@ var _getList = function(req, res){
             }
             var list = [];
             for(var i=0; i<flist.length; i++){
+                delete flist[i]._id.codeContent;
+                delete flist[i]._id.content;
+                delete flist[i]._id.pinYin;
+                delete flist[i]._id.tagName;
+                delete flist[i]._id.categoryName;
+                delete flist[i]._id.private;
                 list.push(flist[i]._id);
             }
+
             res.json({retCode:0, msg:'查询成功', data:list});
         });
     }
