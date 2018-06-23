@@ -131,15 +131,15 @@ var _accessCount = function(req,res,next){
 		};
 
 		var _userID = jwt.decode(token, GLOBAL_CONFIG.TOKEN_SECRET).iss;
-
 		AdminModel.findById({_id:_userID}, function(ferr, fdoc){
 			if(ferr){
 				return next(500);
 			}
-
+		
 			if(!fdoc){
 				return defer.resolve();
 			}
+			
 			return next();
 		});
 		return defer.promise;
@@ -148,6 +148,7 @@ var _accessCount = function(req,res,next){
 	//获取地址
 	var _getAddress = function(){
 		var defer = Q.defer();
+
 		$$.getIpInfo(_ip, function(err, res){
 			if(err){
 				console.log(err,'获取城市出错')
@@ -181,6 +182,7 @@ var _accessCount = function(req,res,next){
 			if(err){
 				return next(err);
 			}
+
 			next();
 		});
 	}

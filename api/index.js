@@ -8,6 +8,7 @@ var categoryServiceList = require('./category');
 var messageServiceList = require('./message');
 var commenteServiceList = require('./comment');
 var hotServiceList = require('./hot');
+var notifyServiceList = require('./notify');
 var accessCount = require('../interceptor').accessCount;
 var _serviceList = function(app){
 	app.use('/api', accessCount);
@@ -18,5 +19,6 @@ var _serviceList = function(app){
 	app.use('/api/message', messageServiceList);
 	app.use('/api/comment', commenteServiceList);
 	app.use('/api/hot', hotServiceList);
+	app.use('/api/notify', notifyServiceList);
 }
 module.exports = _serviceList;

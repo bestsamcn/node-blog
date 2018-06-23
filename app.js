@@ -65,9 +65,11 @@ app.use(function(req, res, next) {
 app.use(function(req, res, next) {
 	var err = new Error('Not Found');
 	err.status = err.status || 404;
+    console.log(err)
 	next(err);
 });
 app.use(function(err, req, res, next) {
+    console.log(err)
 	res.locals.message = err.message;
 	res.locals.error = req.app.get('env') === 'development' ? err : {};
 	res.sendStatus(err.status || 500);

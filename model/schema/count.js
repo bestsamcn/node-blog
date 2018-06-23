@@ -38,4 +38,6 @@ var CountSchema = new mongoose.Schema({
         }
     }
 });
+
+CountSchema.index({ createTime: 1 }, { expireAfterSeconds: 7*3600});
 exports = module.exports = CountSchema;
