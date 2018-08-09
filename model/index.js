@@ -11,6 +11,7 @@ var comment = require('./schema/comment');
 var message = require('./schema/message');
 var count = require('./schema/count');
 var hot = require('./schema/hot');
+var notify = require('./schema/notify');
 var mongoose = require('mongoose');
 
 
@@ -23,3 +24,4 @@ exports.CommentModel = mongoose.model('Comment', comment);
 exports.MessageModel = mongoose.model('Message', message);
 exports.CountModel = mongoose.model('Count', count);
 exports.HotModel = mongoose.model('Hot', hot);
+exports.NotifyModel = mongoose.model('Notify', notify);
