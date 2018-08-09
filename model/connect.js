@@ -2,7 +2,7 @@
  * connect
  * 数据库连接
  */
-var config = require('../config').mongoConfig;
+var config = require('../config');
 
 /**
  * 链接mongodb
@@ -12,7 +12,7 @@ var mongoose = require('mongoose');
 mongoose.Promise = global.Promise;
 mongoose.set('debug',true);
 
-var db = mongoose.connect(config.mongodb);
+var db = mongoose.connect(config.mongoConfig.mongodb);
 db.connection.on('error',function(error){
 	console.log('数据库连接失败'+error);
 });
@@ -26,8 +26,11 @@ exports.mongodb = db;
  * 链接redis
  */
 var redis = require('redis');
-var redisClient = redis.createClient(6379);
+var redisClient = redis.createClient(config.NODE_REDIS_PORT);
 
+redisClient.auth(config.NODE_REDIS_PASS, function(){
+	console.log('auth sucess');
+});
 redisClient.on('error', function (err) {
     console.log('Error ' + err);
 });
