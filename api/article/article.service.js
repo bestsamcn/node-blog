@@ -33,6 +33,7 @@ var _add = function(req, res){
     var _previewText = req.body.previewText;
     var _poster = req.body.poster || '';
     var _private = req.body.private || 0;
+    var _isTop = req.body.isTop;
     
     if(!_tag || !tools.isObjectID(_tag)){
         return res.json({retCode:10014, msg:'请选择标签', data:null});
@@ -115,6 +116,7 @@ var _add = function(req, res){
             lastEditTime:Date.now(),
             poster:_poster,
             private:_private,
+            isTop:_isTop
         }
         ArticleModel.create(entity, function(err, doc){
             if(err || !doc){
@@ -200,6 +202,7 @@ var _edit = function(req, res){
     var _codeContent = req.body.codeContent;
     var _poster = req.body.poster;
     var _private = req.body.private || 0;
+    var _isTop = req.body.isTop;
 
     if(!_tag || !tools.isObjectID(_tag)){
         return res.json({retCode:10014, msg:'请选择标签', data:null});
@@ -293,6 +296,7 @@ var _edit = function(req, res){
             poster:_poster,
             lastEditTime:Date.now(),
             private:_private,
+            isTop:_isTop
         }
         ArticleModel.findByIdAndUpdate(_articleID, {$set:entity}, function(err, ret){
             if(err){
@@ -375,11 +379,13 @@ var _getList = function(req, res){
         filterObj = {};
         (_type == 2) && (sortObj.readNum = -1);
         (_type == 3) && (sortObj.lastEditTime = -1);
-        // (_type == 1) && (sortObj._id = -1);
+        if(_type == 4){
+            sortObj.isTop = -1;
+            sortObj._id = -1;
+        }
     }else{
         sortObj._id = -1;
     }
-
 
     //计算记录总数
     var _getTotal = function() {
@@ -508,8 +514,7 @@ var _getList = function(req, res){
     }
 
     !_type && _getTotal().then(_setHotWord).then(_setTagClickNumber).then(_setCateClickNumber).then(_return);
-    !!_type && (_type == 2) && _getTotal().then(_return);
-    !!_type && (_type == 3) && _getTotal().then(_return);
+    !!_type && (_type == 2 || _type == 3 || _type == 4) && _getTotal().then(_return);
     !!_type && (_type == 1) && _getComment().then(_returnComment);
 }
 

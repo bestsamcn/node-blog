@@ -74,6 +74,11 @@ var ArticleSchema = new mongoose.Schema({
 		type:String,
 		require:true
 	},
+	isTop:{
+		type:Boolean,
+ 		default:false,
+ 		require:true
+	},
 	private:{
 		type:Number,
 		require:true,

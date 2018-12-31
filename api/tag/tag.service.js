@@ -155,6 +155,7 @@ var _edit = function(req, res){
  * 查标签
  */
 var _getList = function(req, res){
+	console.log('sdfsadfsafsf')
 	TagModel.find().sort({_id:'-1'}).exec(function(err, flist){
 		if(err){
 			res.sendStatus(500);

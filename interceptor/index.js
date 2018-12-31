@@ -150,11 +150,20 @@ var _accessCount = function(req,res,next){
 		var defer = Q.defer();
 
 		$$.getIpInfo(_ip, function(err, res){
+			var obj = {};
 			if(err){
 				console.log(err,'获取城市出错')
-				return next();
+				obj.accessip = _ip;
+				obj.apiName = _url;
+				obj.address = {};
+				obj.address.country = '国家';
+				obj.address.province = '省份';
+				obj.address.city = '城市';
+				obj.address.district = '区域';
+				defer.resolve(obj);
+				return false;
 			}
-			var obj = {};
+			
 			if(res.ret == -1){
 				obj.accessip = _ip;
 				obj.apiName = _url;
