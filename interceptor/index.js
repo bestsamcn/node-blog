@@ -7,7 +7,7 @@ var $$ = require('../tools');
 var Q = require('q');
 
 
-
+var oneDayMS = GLOBAL_CONFIG.TOKEN_EXPIRES*24*60*60*1000;
 //登录保存token
 var _addToken = function(token){
 	var defer = Q.defer();
@@ -17,9 +17,11 @@ var _addToken = function(token){
 		if(!!err){
 			return defer.reject(err);	
 		}
-		redisClient.set(token, token);
+
+        var expire = Date.now()+oneDayMS;
+		redisClient.set(token, expire);
 		//单位秒
-		redisClient.expire(token, GLOBAL_CONFIG.TOKEN_EXPIRES*24*60*60);
+		redisClient.expire(token, expire);
 		defer.resolve();
 	});
 	return defer.promise;
@@ -56,7 +58,7 @@ var _valifyToken = function(req, res, next){
 	}
 
 	//查看token是否存在redis中
-	redisClient.get(token, function(err, tok){
+	redisClient.get(token, function(err, expire){
 		if(!!err){
 			res.sendStatus(500);
 			res.end();
@@ -64,18 +66,19 @@ var _valifyToken = function(req, res, next){
 		}
 
 		//如果token不存在，返回401
-		if(!tok){
+		if(!expire){
 			res.json({retCode:10006, msg:'凭证无效，请重新登录', data:null});
 			res.end();
 			return;
 		}
 
-		//如果token已经在redis中，则该token已经无效
-		if(!!tok){
+		//如果token已经在redis中，重新设置超时
+		if(!!expire){
 			var _userID = jwt.decode(token, GLOBAL_CONFIG.TOKEN_SECRET).iss;
-			var _expire = jwt.decode(token, GLOBAL_CONFIG.TOKEN_SECRET).exp;
-			if(_expire < new Date().getTime()){
-				_delToken(tok).then(function(){
+			// var _expire = jwt.decode(token, GLOBAL_CONFIG.TOKEN_SECRET).exp;
+            var now = new Date().getTime();
+			if(expire < now){
+				_delToken(token).then(function(){
 					res.json({retCode:10006, msg:'凭证无效，请重新登录', data:null});
 					res.end();
 				}, function(){
@@ -83,6 +86,9 @@ var _valifyToken = function(req, res, next){
 				});
 				return ;
 			}
+
+            //重新设置超时
+            redisClient.expire(token, Date.now()+oneDayMS);
 			AdminModel.findById({_id:_userID} ,`-password`, function(ferr, fdoc){
 				if(!!err){
 					return next(500);
@@ -99,10 +105,6 @@ var _valifyToken = function(req, res, next){
 				return next();
 			});
 		}
-		return;
-		res.json({retCode:10006, msg:'凭证无效，请重新登录', data:null});
-		res.end();
-		
 	});
 }
 
@@ -115,6 +117,7 @@ var _checkAdminLogin = function(req, res, next){
     }
     next();
 }
+
 
 //用户访问日志
 var _accessCount = function(req,res,next){
@@ -148,9 +151,19 @@ var _accessCount = function(req,res,next){
 	//获取地址
 	var _getAddress = function(){
 		var defer = Q.defer();
+        var obj = {};
+        obj.accessip = _ip;
+        obj.apiName = _url;
+        obj.address = {};
+        obj.address.country = '国家';
+        obj.address.province = '省份';
+        obj.address.city = '城市';
+        obj.address.district = '区域';
+        defer.resolve(obj)
 
 		$$.getIpInfo(_ip, function(err, res){
 			var obj = {};
+            
 			if(err){
 				console.log(err,'获取城市出错')
 				obj.accessip = _ip;
