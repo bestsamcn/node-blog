@@ -88,7 +88,9 @@ var _valifyToken = function(req, res, next){
 			}
 
             //重新设置超时
-            redisClient.expire(token, Date.now()+oneDayMS);
+            expire = Date.now()+oneDayMS;
+            redisClient.expire(token, expire);
+            redisClient.set(token, expire);
 			AdminModel.findById({_id:_userID} ,`-password`, function(ferr, fdoc){
 				if(!!err){
 					return next(500);
@@ -211,6 +213,30 @@ var _accessCount = function(req,res,next){
 	_isAdmin().then(_getAddress).then(_setInfo);
 }
 
+var _checkAlways = function(req, res, next){
+    var _url = req.path;
+	var token = req.body['x-access-token'] || req.query['x-access-token'] || req.headers['x-access-token'];
+
+	//是否是管理员
+    if(!token) {
+        return next();
+    };
+
+    var _userID = jwt.decode(token, GLOBAL_CONFIG.TOKEN_SECRET).iss;
+    AdminModel.findById({_id:_userID}, function(ferr, fdoc){
+        if(ferr){
+            return next(500);
+        }
+    
+        if(!!fdoc && fdoc.userType > 2){
+            req.isAdminRole = true;
+        }
+        
+        return next();
+    });
+}
+
+exports.checkAlways = _checkAlways;
 exports.addToken = _addToken;
 exports.delToken = _delToken;
 exports.valifyToken = _valifyToken;

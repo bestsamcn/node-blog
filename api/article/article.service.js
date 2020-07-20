@@ -327,7 +327,7 @@ var _getList = function(req, res){
     var optObj = {}; 
     var sortObj = {};
     
-    var isAdmin = !!req.isLogin && !!req.user && req.user.userType == 2;
+    var isAdmin = !!req.isAdminRole;
     !isAdmin && (filterObj.private = 0);
     if(!!_keyword){
         _keyword = decodeURI(_keyword);
@@ -377,6 +377,7 @@ var _getList = function(req, res){
     }
     if(!!_type){
         filterObj = {};
+        !isAdmin && (filterObj.private = 0);
         (_type == 2) && (sortObj.readNum = -1);
         (_type == 3) && (sortObj.lastEditTime = -1);
         if(_type == 4){
@@ -472,8 +473,15 @@ var _getList = function(req, res){
     //查询评论最多的文章id集合
     var _getComment = function(){
         var defer = Q.defer();
+        var filter = [
+            {$group:{_id:'$article', count:{$sum:1}}}, 
+            {$project:{_id:1, count:1}}, 
+            {$sort:{count:-1}}, 
+            // {$limit:4}
+        ];
+
         //$limit需要分在排序后面，不然取值逻辑有问题
-        CommentModel.aggregate([{$group:{_id:'$article', count:{$sum:1}}}, {$project:{_id:1, count:1}}, {$sort:{count:-1}}, {$limit:4}]).exec(function(err, list){
+        CommentModel.aggregate(filter).exec(function(err, list){
             if(err){
                 return res.sendStatus(500);
             }
@@ -506,7 +514,13 @@ var _getList = function(req, res){
                 delete flist[i]._id.tagName;
                 delete flist[i]._id.categoryName;
                 delete flist[i]._id.private;
-                list.push(flist[i]._id);
+                if(!req.isAdminRole){
+                    flist[i]._id.private != 1 &&  list.push(flist[i]._id);
+                }else{
+                    list.push(flist[i]._id);
+                }
+                
+                if(list.length === 4) break;
             }
 
             res.json({retCode:0, msg:'查询成功', data:list});
@@ -532,6 +546,11 @@ var _getDetail = function(req, res){
         return res.json({retCode:10012, msg:'id无效', data:null});
     }
     var _exclude = _type == 1 ? '-codeContent -tagName -categoryName' : '-content  -tagName -categoryName';
+    var _otherExcludes = '-codeContent -content -previewText -pinYin -tagName -categoryName';
+    if(!req.isAdminRole){
+        _exclude += ' -private';
+        _otherExcludes += ' -private';
+    }
 
     //首先查询当前id的记录是否存在
     var _isExistRecord = function(){
@@ -566,7 +585,11 @@ var _getDetail = function(req, res){
     //查询上一条记录
     var _findPrevRecord = function(){
         var defer = Q.defer();
-        ArticleModel.find({_id:{$lt:_articleID}}, '-codeContent -content -previewText -pinYin -tagName -categoryName').limit(1).sort({_id:-1}).exec(function(ferr, fdoc){
+        var filter = {_id:{$lt:_articleID}};
+        if(!req.isAdminRole){
+            filter.private = {$ne:1};
+        }
+        ArticleModel.find(filter, _otherExcludes).limit(1).sort({_id:-1}).exec(function(ferr, fdoc){
             if(ferr){
                 res.sendStatus(500);
                 return;
@@ -579,7 +602,11 @@ var _getDetail = function(req, res){
     //查询下一条记录
     var _findNextRecord = function(){
         var defer = Q.defer();
-        ArticleModel.find({_id:{$gt:_articleID}}, '-codeContent -content -previewText -pinYin -tagName -categoryName').limit(1).sort({_id:-1}).exec(function(ferr, fdoc){
+        var filter = {_id:{$gt:_articleID}};
+        if(!req.isAdminRole){
+            filter.private = {$ne:1};
+        }
+        ArticleModel.find(filter, _otherExcludes).limit(1).sort({_id:-1}).exec(function(ferr, fdoc){
             if(ferr){
                 res.sendStatus(500);
                 return;
