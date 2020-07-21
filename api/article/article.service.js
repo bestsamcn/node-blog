@@ -492,7 +492,11 @@ var _getList = function(req, res){
 
     //返回
     var _return = function(obj){
-        ArticleModel.find(filterObj).skip(_pageIndex * _pageSize).limit(_pageSize).select('-codeContent -content -pinYin -tagName -categoryName -private').populate(['tag', 'category']).sort(sortObj).exec(function(err, flist){
+        var exlucdes = '-codeContent -content -pinYin -tagName -categoryName';
+        if(!req.isAdminRole){
+            exlucdes += ' -private';
+        }
+        ArticleModel.find(filterObj).skip(_pageIndex * _pageSize).limit(_pageSize).select(exlucdes).populate(['tag', 'category']).sort(sortObj).exec(function(err, flist){
             if(err){
                 return res.sendStatus(500);
             }
