@@ -7,7 +7,8 @@ var interceptor = require('../../interceptor');
 router.post('/add', commentService.add);
 router.get('/delete', interceptor.valifyToken, interceptor.checkAdminLogin, commentService.delete);
 // router.post('/edit', interceptor.valifyToken, interceptor.checkAdminLogin, commentService.edit);
-router.get('/getList', commentService.getList);
+router.get('/getList', interceptor.checkAlways, commentService.getList);
 router.post('/like', commentService.like);
+router.get('/getLatest',interceptor.checkAlways, commentService.getLatest);
 
 module.exports = router;

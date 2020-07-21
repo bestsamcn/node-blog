@@ -263,16 +263,46 @@ var _getList = function(req, res){
     }
 
     var _return = function(_total){
-        CommentModel.find(filterObj).skip(_pageIndex * _pageSize).limit(_pageSize).populate(['parentComment','article']).sort({'_id':-1}).exec(function(err, flist){
+
+        //两次关联查询，父级评论parentComment返回全字段，article只返回_id,title
+        CommentModel.find(filterObj).skip(_pageIndex * _pageSize).limit(_pageSize).populate(['parentComment']).populate({path:'article', select:'_id title private'}).sort({'_id':-1}).exec(function(err, flist){
             if(err){
                 return res.sendStatus(500);
             }
+
+            if(!req.isAdminRole && flist && flist.length && flist[0].article && flist[0].article.private == 1){
+                res.json({retCode:10018, msg:'查找无该记录', data:null})
+            }
+
             res.json({retCode:0, msg:'查询成功', data:flist, pageIndex:_pageIndex+1, pageSize:_pageSize, total:_total});
         });
     }
     
 
     _getTotal().then(_return);
+}
+
+//获取最新评论
+var _getLatest = function(req, res){
+    CommentModel.find().populate({path:'article', select:'_id title private'}).sort({'_id':-1}).exec(function(err, flist){
+        if(err){
+            return res.sendStatus(500);
+        }
+        var list = [];
+        if(flist && flist.length){
+            for(var i=0; i< flist.length; i++){
+                if(!req.isAdminRole){
+                    if(flist[i].article.private == 1){
+                        continue;
+                    }
+                    delete flist[i].private;
+                }
+                list.push(flist[i]);
+                if(list.length == 4) break;
+            } 
+        }
+        res.json({retCode:0, msg:'查询成功', data:list});
+    });
 }
 
 var _like = function(req, res){
@@ -321,3 +351,4 @@ exports.add = _add;
 exports.delete = _delete;
 exports.getList = _getList;
 exports.like = _like;
+exports.getLatest = _getLatest;

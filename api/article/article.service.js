@@ -564,6 +564,10 @@ var _getDetail = function(req, res){
             if(!fdoc){
                 return res.json({retCode:10018, msg:'查找无该记录', data:null});
             }
+
+            if(fdoc.private == 1 && !req.isAdminRole){
+                res.json({retCode:10018, msg:'查找无该记录', data:null});
+            }
             defer.resolve();
         });
         return defer.promise;
