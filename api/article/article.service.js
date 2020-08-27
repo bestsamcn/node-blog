@@ -688,7 +688,7 @@ var _addPoster = function(req, res){
     form.encoding = 'utf-8'; //设置编辑
     form.uploadDir = posterDir; //设置上传目录
     form.keepExtensions = true; //保留后缀
-    form.maxFieldsSize = 5 * 1024 * 1024; //文件大小
+    form.maxFieldsSize = 10 * 1024 * 1024; //文件大小
     form.type = true;
     form.parse(req, function(err, fields, files) {
         if(err || !fields || !files){
@@ -699,8 +699,8 @@ var _addPoster = function(req, res){
             res.json({retCode:100024,msg:'图片格式错误',data:null});
             return;
         }
-        if(files.poster.size > 5 * 1024 * 1024){
-            res.json({retCode:100025,msg:'图片不能大于5M',data:null});
+        if(files.poster.size > 10 * 1024 * 1024){
+            res.json({retCode:100025,msg:'图片不能大于10M',data:null});
             return;
         }
         var suffix = '';
